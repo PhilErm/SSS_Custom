@@ -26,6 +26,8 @@ harvShare <- function(catch, nBox, nBoxSpared, allocation){
 # Dispersal function
 # TBC
 
+#GitTest
+
 # PARAMETERS ####
 
 r <- 2 # Intrinsic growth rate
