@@ -7,7 +7,17 @@ library(tidyverse)
 
 # Beverton-Holt growth function
 bev.holt <- function(n, r, K){
-  (r*K*n) / (K + (r-1)*n)
+  (r * K * n) / (K + (r - 1) * n)
+}
+
+# Beverton-Holt growth function that can account for habitat damage
+bev.holt.hab <- function(n, r, K, allocation, habitat.sens){
+  if(allocation == "reserve"){
+    (r * K * n) / (K + (r - 1) * n) 
+  } else {
+    (r * K * habitat.sens * n) / ((K * habitat.sens) + (r - 1) * n)
+  }
+  
 }
 
 # Harvest for a particular box function
@@ -20,10 +30,25 @@ harv.share <- function(catch, n.box, n.box.spared, allocation){
 }
 
 # Bycatch for a particular box function
-# TBD
+bycatch <- function(catch, n.box, n.box.spared, allocation, bycatch.rate){
+  if(allocation == "reserve"){ # Each box is allocated ("allocation") as a reserve or not. If allocated as a reserve, no bycatch is taken from it
+    0
+  } else {
+    bycatch.rate * catch / (n.box - n.box.spared)  # If a box is not allocated as a reserve, then a proportional share of the total catch is taken from it, which causes a proportional amount of bycatch
+  }
+}
 
 # Habitat damage for a particular box function
-# TBD
+
+# Can do this through a function. Let them reproduce normally, then calculate the amount that were produced, then half that. Or something like that.
+
+bycatch <- function(catch, n.box, n.box.spared, allocation, habitat.rate){
+  if(allocation == "reserve"){ # Each box is allocated ("allocation") as a reserve or not. If allocated as a reserve, no bycatch is taken from it
+    0
+  } else {
+    bycatch.rate * catch / (n.box - n.box.spared)  # If a box is not allocated as a reserve, then a proportional share of the total catch is taken from it, which causes a proportional amount of bycatch
+  }
+}
 
 # Dispersal function
 # TBD
@@ -39,14 +64,16 @@ init.fished <- 250 # Initial size of population in each box
 r.bycatch <- 2
 K.bycatch <- 500
 init.bycatch <- 250
+bycatch.rate <- 0.1 # Number of individuals taken as bycatch per caught individuals of fished species
 
 # Habitat sensitive species
 r.habitat <- 2
 K.habitat <- 500
 init.habitat <- 250
+habitat.rate <- 0.5 # The proportionate decrease in reproduction if habitat is damaged by fishing
   
 # Fishery
-catch <- 100 # Absolute catch required across entire seascape per timestep
+catch <- 50 # Absolute catch required across entire seascape per timestep
 
 # Simulation
 n.time <- 100 # Length of time to calculate
@@ -56,15 +83,28 @@ n.box.spared <- sum(allocation=="reserve") # The number of boxes that are spared
 
 # Running model ####
 
-# Constructing matrix for model output
+# Constructing matrices for model output
+# Fished species
 n.fished <- matrix(NA, n.box, n.time) # Matrix is constructed in which each row is a box and each column is a time step
 n.fished.0 <- rep(init.fished, n.box) # Preparing for the first time step of each box to be populated with the initial population
 n.fished[,1] <- n.fished.0 # The first time step of each box is populated with the intitial population
-  
+
+# Bycatch species
+n.bycatch <- matrix(NA, n.box, n.time) # Matrix is constructed in which each row is a box and each column is a time step
+n.bycatch.0 <- rep(init.bycatch, n.box) # Preparing for the first time step of each box to be populated with the initial population
+n.bycatch[,1] <- n.bycatch.0 # The first time step of each box is populated with the intitial population
+
+# Habitat sensitive species
+n.habitat <- matrix(NA, n.box, n.time) # Matrix is constructed in which each row is a box and each column is a time step
+n.habitat.0 <- rep(init.habitat, n.box) # Preparing for the first time step of each box to be populated with the initial population
+n.habitat[,1] <- n.habitat.0 # The first time step of each box is populated with the intitial population
+
 # Running model
 for(i in 1:(n.time-1)){ # For each time step
   for(j in 1:n.box ){ # For each box
     n.fished[j,i+1] <- bev.holt(n.fished[j,i], r.fished, K.fished) - harv.share(catch, n.box, n.box.spared, allocation[j]) # Calculate next time step's population based on gains through growth and losses through harvest. Dispersal to be added
+    n.bycatch[j,i+1] <- bev.holt(n.bycatch[j,i], r.bycatch, K.bycatch) - bycatch(catch, n.box, n.box.spared, allocation[j], bycatch.rate) # Calculate next time step's population based on gains through growth and losses through harvest. Dispersal to be added
+    n.habitat[j,i+1] <- bev.holt.hab(n.habitat[j,i], r.habitat, K.habitat, allocation[j], habitat.rate) # Calculate next time step's population based on gains through growth and losses through harvest. Dispersal to be added
   }
 }
 
