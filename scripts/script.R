@@ -1,66 +1,101 @@
-# EXPLORING SEA SPARING AND SHARING WITH A CUSTOM MATHEMATICAL MODEL ####
+# Exploring sea sharing and sparing with a custom model ####
 
-# REQUIRED PACKAGES ####
+# Required packages ####
+library(tidyverse)
 
-# FUNCTIONS ####
+# Functions ####
 
 # Beverton-Holt growth function
-bevHolt <- function(n, r, K){
+bev.holt <- function(n, r, K){
   (r*K*n) / (K + (r-1)*n)
 }
 
-# Logistic growth function # Check if need to also include (n +) to ensure it works for discrete generations
-logistic <- function(n, r, K){
-  r*n*(1-(n/K))
-}
-
 # Harvest for a particular box function
-harvShare <- function(catch, nBox, nBoxSpared, allocation){
+harv.share <- function(catch, n.box, n.box.spared, allocation){
   if(allocation == "reserve"){ # Each box is allocated ("allocation") as a reserve or not. If allocated as a reserve, no catch is taken from it
   0
   } else {
-    catch/(nBox-nBoxSpared) # If a box is not allocated as a reserve, then a proportional share of the total catch (or demand, hence "D") is taken from it 
+    catch / (n.box - n.box.spared) # If a box is not allocated as a reserve, then a proportional share of the total catch is taken from it 
   }
 }
+
+# Bycatch for a particular box function
+# TBD
+
+# Habitat damage for a particular box function
+# TBD
 
 # Dispersal function
-# TBC
+# TBD
 
-#GitTest
+# Parameters ####
 
-# PARAMETERS ####
+# Fished species
+r.fished <- 2 # Intrinsic growth rate
+K.fished <- 500 # Carrying capacity (per box)
+init.fished <- 250 # Initial size of population in each box
 
-r <- 2 # Intrinsic growth rate
-K <- 500 # Carrying capacity
-catch <- 1 # Demand aka catch required
-nTimes <- 20 # Length of time to calculate
-initialN <- 5 # Initial size of population in each box
-allo <- c("reserve", "no reserve") # Assigning reserves to boxes. Requires revision for anything but two boxes
-nBox <- length(allocation) # The number of boxes
-nBoxSpared <- sum(allocation=="reserve") # The number of boxes that are spared
+# Bycatch species
+r.bycatch <- 2
+K.bycatch <- 500
+init.bycatch <- 250
 
-# RUNNING MODEL ####
+# Habitat sensitive species
+r.habitat <- 2
+K.habitat <- 500
+init.habitat <- 250
+  
+# Fishery
+catch <- 100 # Absolute catch required across entire seascape per timestep
+
+# Simulation
+n.time <- 100 # Length of time to calculate
+allocation <- c("reserve", "no reserve") # Assigning reserves to boxes. Requires revision for anything but two boxes
+n.box <- length(allocation) # The number of boxes
+n.box.spared <- sum(allocation=="reserve") # The number of boxes that are spared
+
+# Running model ####
 
 # Constructing matrix for model output
-nFish <- matrix(NA, nBox, nTimes) # Matrix is constructed in which each row is a box and each column is a time step
-nFish0 <- rep(initialN, nBox) # Preparing for the first time step of each box to be populated with the initial population
-nFish[,1] <- nFish0 # The first time step of each box is populated with the intitial population
+n.fished <- matrix(NA, n.box, n.time) # Matrix is constructed in which each row is a box and each column is a time step
+n.fished.0 <- rep(init.fished, n.box) # Preparing for the first time step of each box to be populated with the initial population
+n.fished[,1] <- n.fished.0 # The first time step of each box is populated with the intitial population
   
 # Running model
-for(i in 1:(nTimes-1)){ # For each time step
-  for( j in 1:nBox ){ # For each box
-    nFish[j,i+1] <- bevHolt(nFish[j,i], r, K) - harvShare(catch, nBox, nBoxSpared, allocation[j]) # Calculate next time step's population based on gains through growth and losses through harvest. Dispersal to be added
+for(i in 1:(n.time-1)){ # For each time step
+  for(j in 1:n.box ){ # For each box
+    n.fished[j,i+1] <- bev.holt(n.fished[j,i], r.fished, K.fished) - harv.share(catch, n.box, n.box.spared, allocation[j]) # Calculate next time step's population based on gains through growth and losses through harvest. Dispersal to be added
   }
 }
 
-# OUTPUT ANALYSIS ####
+# Output analysis ####
 
+# Population of fished species per box over time 
 par(mfrow = c(2,1))
-plot(1:nTimes, nFish[1,], ylim = c(0,K))
-plot(1:nTimes, nFish[2,], ylim = c(0,K))
+plot(1:n.time, n.fished[1,], ylim = c(0,K.fished))
+plot(1:n.time, n.fished[2,], ylim = c(0,K.fished))
 
-## ROUGH WORK####
+# Population of bycatch species per box over time 
+par(mfrow = c(2,1))
+plot(1:n.time, n.bycatch[1,], ylim = c(0,K.bycatch))
+plot(1:n.time, n.bycatch[2,], ylim = c(0,K.bycatch))
+
+# Population of habitat sensitive species per box over time 
+par(mfrow = c(2,1))
+plot(1:n.time, n.habitat[1,], ylim = c(0,K.habitat))
+plot(1:n.time, n.habitat[2,], ylim = c(0,K.habitat))
+
+## Rough work ####
 # 
+# bycatch <- function(alph, harv, n, K){
+#   alph * harv * (n/K)
+# }
+# 
+# bycatch(0.1, 100, 500, 500)
+# 
+# z <- bycatch(0.1, 100, 0:500, 500)
+# plot(z)
+
 # plot(harvShare(D=0:100, nBox=9, nBoxSpared=3, allo = "unreserved"))
 # 
 # testMat <- matrix(nrow=3,ncol=3)
