@@ -4,8 +4,8 @@
 ## Make habitat damage sensitivity scale with intensity of fishing pressure in a grid cell
 ## Consider making fishing pressure scale with the abundance of the fished species in a grid cell
 ## Rebuild grid/dispersal functions so that real data can be input into them
-## Split migration function so each species has unique migration grids
-## Rebuild core model functions so that populations of different species interrelate (i.e. so a decrease in catch caused by drop of species in one cell leads to a decrease in bycatch in that cell)
+## Split migration function so each species has unique migration grid
+## Rebuild core model functions so that populations of different species interrelate (i.e. so if catch function is dynamic, then a decrease in catch caused by drop of species in one cell leads to a decrease in bycatch in that cell)
 
 # Notes
 #
@@ -111,6 +111,7 @@ allocate <- function(prop.spared, n.box){
 r.fished <- 2 # Intrinsic growth rate
 K.fished <- 500 # Carrying capacity (per box)
 init.fished <- 250 # Initial size of population in each box
+catch <- 200 # Absolute catch required across entire seascape per timestep
 
 # Bycatch species
 r.bycatch <- 2
@@ -123,9 +124,6 @@ r.habitat <- 2
 K.habitat <- 500
 init.habitat <- 250
 habitat.rate <- 0.5 # The proportionate decrease in carrying capacity if habitat is damaged by fishing
-
-# Fishery
-catch <- 200 # Absolute catch required across entire seascape per timestep
 
 # Simulation
 n.time <- 100 # Length of time to calculate
