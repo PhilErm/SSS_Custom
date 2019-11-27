@@ -5,6 +5,7 @@
 ## Consider making fishing pressure scale with the abundance of the fished species in a grid cell
 ## Rebuild grid/dispersal functions so that real data can be input into them
 ## Split migration function so each species has unique migration grids
+## Rebuild core model functions so that populations of different species interrelate (i.e. so a decrease in catch caused by drop of species in one cell leads to a decrease in bycatch in that cell)
 
 # Notes
 #
@@ -122,7 +123,7 @@ r.habitat <- 2
 K.habitat <- 500
 init.habitat <- 250
 habitat.rate <- 0.5 # The proportionate decrease in carrying capacity if habitat is damaged by fishing
-  
+
 # Fishery
 catch <- 200 # Absolute catch required across entire seascape per timestep
 
@@ -174,48 +175,42 @@ for(i in 1:(n.time-1)){ # For each time step
 
 # Output analysis ####
 
-# Function for changing colour of plots depending on if grid cell is spared (green) or shared (red)
+# Function for changing colour of plots depending on if grid cell is spared (green) or fished (red)
 plot.colour <- function(allocation){
   if(allocation == "reserve"){"green"} else {
     "red"
   }
 }
 
-# Population of fished species per box over time 
-# Single plots
-par(mfcol=c(1,1))
-for(i in 1:n.box){
-   plot(1:n.time, n.fished[i,], ylim = c(0,K.fished*1.2), main = paste('Abundance of fished species in box', i), col = plot.colour(allocation[i]))
+# Function for producing abundance plots
+abund.plot <- function(species, K.species){
+  par(mfcol=c(sqrt(n.box), sqrt(n.box)), 
+      mai = c(0.2, 0.2, 0.2, 0.2))
+  for(i in 1:n.box){
+    plot(x = 1:n.time, 
+         y = species[i,], 
+         ylim = c(0,K.species*1.2), 
+         col = plot.colour(allocation[i]), 
+         ylab = '',
+         xlab = '')
+    text(x = n.time/2, 
+         y = K.species/4, 
+         labels = paste('Box', i, deparse(substitute(species))))
+  }
 }
 
-# Unified plot
-par(mfcol=c(sqrt(n.box),sqrt(n.box)))
-for(i in 1:n.box){
-  plot(1:n.time, n.fished[i,], ylim = c(0,K.fished*1.2), main = paste('Abundance of fished species in box', i), col = plot.colour(allocation[i]))
-}
+# Population of fished species per box over time 
+abund.plot(n.fished, K.fished)
 
 # Population of bycatch species per box over time 
-# Single plots
-par(mfcol=c(1,1))
-for(i in 1:n.box){
-  plot(1:n.time, n.bycatch[i,], ylim = c(0,K.bycatch*1.2), main = paste('Abundance of bycatch species in box', i), col = plot.colour(allocation[i]))
-}
-
-# Unified plot
-par(mfcol=c(sqrt(n.box),sqrt(n.box)))
-for(i in 1:n.box){
-  plot(1:n.time, n.bycatch[i,], ylim = c(0,K.bycatch*1.2), main = paste('Abundance of bycatch species in box', i), col = plot.colour(allocation[i]))
-}
+abund.plot(n.bycatch, K.bycatch)
 
 # Population of habitat sensitive species per box over time 
-# Single plots
-par(mfcol=c(1,1))
-for(i in 1:n.box){
-  plot(1:n.time, n.habitat[i,], ylim = c(0,K.habitat*1.2), main = paste('Abundance of habitat species in box', i), col = plot.colour(allocation[i]))
-}
+abund.plot(n.habitat, K.habitat)
 
-# Unified plot
-par(mfcol=c(sqrt(n.box),sqrt(n.box)))
-for(i in 1:n.box){
-  plot(1:n.time, n.habitat[i,], ylim = c(0,K.habitat*1.2), main = paste('Abundance of habitat species in box', i), col = plot.colour(allocation[i]))
-}
+# Dispersal grid for each cell
+# for(i in 1:n.box){
+#   t <- raster(grids[[i]])
+#   plot(t, legend = FALSE)
+#   text(t, digits = 2)
+# }
