@@ -1,7 +1,17 @@
-# Exploring sea sharing and sparing with a custom model ####
+# Exploring spatially explicit sea sharing and sparing for three species ####
+
+# To-dos
+## Make habitat damage sensitivity scale with intensity of fishing pressure in a grid cell
+## Consider making fishing pressure scale with the abundance of the fished species in a grid cell
+## Rebuild grid/dispersal functions so that real data can be input into them
+## Split migration function so each species has unique migration grids
+
+# Notes
+#
 
 # Required packages ####
 library(tidyverse)
+library(gdistance)
 
 # Functions ####
 
@@ -15,9 +25,8 @@ bev.holt.hab <- function(n, r, K, allocation, habitat.sens){
   if(allocation == "reserve"){
     (r * K * n) / (K + (r - 1) * n) 
   } else {
-    (r * K * habitat.sens * n) / ((K * habitat.sens) + (r - 1) * n)
+    (r * K * habitat.sens * n) / ((K * habitat.sens) + (r - 1) * n) # If the grid cell is fished, carrying capacity is lowered
   }
-  
 }
 
 # Harvest for a particular box function
@@ -38,20 +47,62 @@ bycatch <- function(catch, n.box, n.box.spared, allocation, bycatch.rate){
   }
 }
 
-# Habitat damage for a particular box function
-
-# Can do this through a function. Let them reproduce normally, then calculate the amount that were produced, then half that. Or something like that.
-
-bycatch <- function(catch, n.box, n.box.spared, allocation, habitat.rate){
-  if(allocation == "reserve"){ # Each box is allocated ("allocation") as a reserve or not. If allocated as a reserve, no bycatch is taken from it
-    0
-  } else {
-    bycatch.rate * catch / (n.box - n.box.spared)  # If a box is not allocated as a reserve, then a proportional share of the total catch is taken from it, which causes a proportional amount of bycatch
-  }
+# Distance from one grid cell to all other grid cells function
+dist.finder <- function(n.box, origin.box){
+  rast.dims <- sqrt(n.box) # Determining grid dimensions
+  disp.grid <- raster(ncol=rast.dims, nrow=rast.dims, xmn=-rast.dims, xmx=rast.dims, ymn=-rast.dims, ymx=rast.dims) # Building a raster of chosen dimensions
+  disp.grid[] <- 1:ncell(disp.grid) # Numbering raster grid cells left to right, top to bottom
+  disp.dists <- gridDistance(disp.grid, origin=origin.box) # Calculating distance from origin box to other boxes
+  disp.dists <- disp.dists/(220000) # Hacky correction so that distances are approximately in units. Needs to be updated
 }
 
-# Dispersal function
-# TBD
+# Function that creates matrix of probabilities of dispersing from one grid cell to another. Hacky and just for testing maths that depends on dispersal grid, will need to be replaced
+prob.finder <- function(dist.grid, disp.kern, max.dist){ # Some redundant arguments
+  prob.grid <- 0.5-(dist.grid*0.2) # Begins conversion of distance grid into dispersal probability grid. Hacky -- numbers are arbitrary
+  prob.grid[prob.grid < 0] <- 0 # Converts any "probabilities" less than 0 to 0
+  comb <- cellStats(prob.grid, stat='sum') # Ensuring all probabilities add to 1
+  prob.grid <- prob.grid/comb # Ensuring all probabilities add to 1
+  prob.grid <- as.matrix(prob.grid) # Converting the raster into a matrix for use 
+}
+
+# Making a dispersal probability matrix for each cell function
+grid.maker <- function(n.box){
+  grid.list <- vector(length = n.box, mode = 'list') # Creates an empty list to store matrices
+  for(i in 1:n.box){ 
+  disp.mat <- dist.finder(n.box, i)
+  grid.list[[i]] <- prob.finder(disp.mat)
+  }
+  grid.list
+}
+
+# Summation of all movement between cells function
+migration <- function(species, time, box, grids, n.box){
+  result <- vector(mode = "integer", length = n.box) # Create a vector for saving the number of migrants coming from each box to some box of interest
+  for(l in 1:n.box){ # For each box
+    result[l] <- species[l,time]*grids[[l]][box] # Look at the population size of a box, multiply it by the proportion of individuals that ought to move from there to the box of interest
+  }
+  sum(result) # Sum all the total number of individuals moving into the box of interest and being retained in the box
+}
+
+# Allocating cells to spared or shared function
+allocate <- function(prop.spared, n.box){
+  c(rep("reserve", prop.spared*n.box),rep("no reserve", (1-prop.spared)*n.box))
+}
+
+# Working but messily constructed dispersal functions. Use in case neatly constructed functions break
+# for(i in 1:(n.time-1)){ # For each time step
+#   for(j in 1:n.box){ # For each box
+#     n.fished[j,i+1] <- bev.holt(migration(k), r.fished, K.fished) - harv.share(catch, n.box, n.box.spared, allocation[j])
+#   }
+# }
+# 
+# migration <- function(k){
+#   result <- vector(mode = "integer", length = n.box)
+#   for(k in 1:n.box){
+#     result[k] <- n.fished[k,i]*grids[[k]][j]
+#   }
+#   sum(result)
+# }
 
 # Parameters ####
 
@@ -70,134 +121,101 @@ bycatch.rate <- 0.1 # Number of individuals taken as bycatch per caught individu
 r.habitat <- 2
 K.habitat <- 500
 init.habitat <- 250
-habitat.rate <- 0.5 # The proportionate decrease in reproduction if habitat is damaged by fishing
+habitat.rate <- 0.5 # The proportionate decrease in carrying capacity if habitat is damaged by fishing
   
 # Fishery
-catch <- 50 # Absolute catch required across entire seascape per timestep
+catch <- 200 # Absolute catch required across entire seascape per timestep
 
 # Simulation
 n.time <- 100 # Length of time to calculate
-allocation <- c("reserve", "no reserve") # Assigning reserves to boxes. Requires revision for anything but two boxes
-n.box <- length(allocation) # The number of boxes
-n.box.spared <- sum(allocation=="reserve") # The number of boxes that are spared
+n.box <- 36 # Number of boxes. Must be divisble by 2 and a perfect square
+prop.spared <- 0.5 # Proportion of seascape spared
 
 # Running model ####
 
-# Constructing matrices for model output
-# Fished species
+# Creating objects needed for simulation based on parameters
+allocation <- allocate(prop.spared, n.box) # Allocating specific boxes to spared or shared
+n.box.spared <- sum(allocation=="reserve") # Calculating the number of boxes that are spared
+grids <- grid.maker(n.box) # Creating 1 dispersal probability grid for each cell
+
+# Fished species result matrix
 n.fished <- matrix(NA, n.box, n.time) # Matrix is constructed in which each row is a box and each column is a time step
 n.fished.0 <- rep(init.fished, n.box) # Preparing for the first time step of each box to be populated with the initial population
 n.fished[,1] <- n.fished.0 # The first time step of each box is populated with the intitial population
 
-# Bycatch species
-n.bycatch <- matrix(NA, n.box, n.time) # Matrix is constructed in which each row is a box and each column is a time step
-n.bycatch.0 <- rep(init.bycatch, n.box) # Preparing for the first time step of each box to be populated with the initial population
-n.bycatch[,1] <- n.bycatch.0 # The first time step of each box is populated with the intitial population
+# Bycatch species result matrix
+n.bycatch <- matrix(NA, n.box, n.time)
+n.bycatch.0 <- rep(init.bycatch, n.box)
+n.bycatch[,1] <- n.bycatch.0
 
-# Habitat sensitive species
-n.habitat <- matrix(NA, n.box, n.time) # Matrix is constructed in which each row is a box and each column is a time step
-n.habitat.0 <- rep(init.habitat, n.box) # Preparing for the first time step of each box to be populated with the initial population
-n.habitat[,1] <- n.habitat.0 # The first time step of each box is populated with the intitial population
+# Habitat sensitive species result matrix
+n.habitat <- matrix(NA, n.box, n.time)
+n.habitat.0 <- rep(init.habitat, n.box)
+n.habitat[,1] <- n.habitat.0
 
 # Running model
+# Pre-dispersal functions
+# for(i in 1:(n.time-1)){ # For each time step
+#   for(j in 1:n.box){ # For each box
+#     n.fished[j,i+1] <- bev.holt(n.fished[j,i], r.fished, K.fished) - harv.share(catch, n.box, n.box.spared, allocation[j]) # Calculate next time step's population based on gains through growth and losses through harvest. Dispersal to be added
+#     n.bycatch[j,i+1] <- bev.holt(n.bycatch[j,i], r.bycatch, K.bycatch) - bycatch(catch, n.box, n.box.spared, allocation[j], bycatch.rate) # Calculate next time step's population based on gains through growth and losses through harvest. Dispersal to be added
+#     n.habitat[j,i+1] <- bev.holt.hab(n.habitat[j,i], r.habitat, K.habitat, allocation[j], habitat.rate) # Calculate next time step's population based on gains through growth and losses through harvest. Dispersal to be added
+#   }
+# }
+
+# With new functions that account for dispersal
 for(i in 1:(n.time-1)){ # For each time step
-  for(j in 1:n.box ){ # For each box
-    n.fished[j,i+1] <- bev.holt(n.fished[j,i], r.fished, K.fished) - harv.share(catch, n.box, n.box.spared, allocation[j]) # Calculate next time step's population based on gains through growth and losses through harvest. Dispersal to be added
-    n.bycatch[j,i+1] <- bev.holt(n.bycatch[j,i], r.bycatch, K.bycatch) - bycatch(catch, n.box, n.box.spared, allocation[j], bycatch.rate) # Calculate next time step's population based on gains through growth and losses through harvest. Dispersal to be added
-    n.habitat[j,i+1] <- bev.holt.hab(n.habitat[j,i], r.habitat, K.habitat, allocation[j], habitat.rate) # Calculate next time step's population based on gains through growth and losses through harvest. Dispersal to be added
+  for(j in 1:n.box){ # For each box
+    n.fished[j,i+1] <- bev.holt(migration(n.fished, i, j, grids, n.box), r.fished, K.fished) - harv.share(catch, n.box, n.box.spared, allocation[j])
+    n.bycatch[j,i+1] <- bev.holt(migration(n.bycatch, i, j, grids, n.box), r.bycatch, K.bycatch) - bycatch(catch, n.box, n.box.spared, allocation[j], bycatch.rate)
+    n.habitat[j,i+1] <- bev.holt.hab(migration(n.habitat, i, j, grids, n.box), r.habitat, K.habitat, allocation[j], habitat.rate)
   }
 }
 
 # Output analysis ####
 
+# Function for changing colour of plots depending on if grid cell is spared (green) or shared (red)
+plot.colour <- function(allocation){
+  if(allocation == "reserve"){"green"} else {
+    "red"
+  }
+}
+
 # Population of fished species per box over time 
-par(mfrow = c(2,1))
-plot(1:n.time, n.fished[1,], ylim = c(0,K.fished))
-plot(1:n.time, n.fished[2,], ylim = c(0,K.fished))
+# Single plots
+par(mfcol=c(1,1))
+for(i in 1:n.box){
+   plot(1:n.time, n.fished[i,], ylim = c(0,K.fished*1.2), main = paste('Abundance of fished species in box', i), col = plot.colour(allocation[i]))
+}
+
+# Unified plot
+par(mfcol=c(sqrt(n.box),sqrt(n.box)))
+for(i in 1:n.box){
+  plot(1:n.time, n.fished[i,], ylim = c(0,K.fished*1.2), main = paste('Abundance of fished species in box', i), col = plot.colour(allocation[i]))
+}
 
 # Population of bycatch species per box over time 
-par(mfrow = c(2,1))
-plot(1:n.time, n.bycatch[1,], ylim = c(0,K.bycatch))
-plot(1:n.time, n.bycatch[2,], ylim = c(0,K.bycatch))
+# Single plots
+par(mfcol=c(1,1))
+for(i in 1:n.box){
+  plot(1:n.time, n.bycatch[i,], ylim = c(0,K.bycatch*1.2), main = paste('Abundance of bycatch species in box', i), col = plot.colour(allocation[i]))
+}
+
+# Unified plot
+par(mfcol=c(sqrt(n.box),sqrt(n.box)))
+for(i in 1:n.box){
+  plot(1:n.time, n.bycatch[i,], ylim = c(0,K.bycatch*1.2), main = paste('Abundance of bycatch species in box', i), col = plot.colour(allocation[i]))
+}
 
 # Population of habitat sensitive species per box over time 
-par(mfrow = c(2,1))
-plot(1:n.time, n.habitat[1,], ylim = c(0,K.habitat))
-plot(1:n.time, n.habitat[2,], ylim = c(0,K.habitat))
+# Single plots
+par(mfcol=c(1,1))
+for(i in 1:n.box){
+  plot(1:n.time, n.habitat[i,], ylim = c(0,K.habitat*1.2), main = paste('Abundance of habitat species in box', i), col = plot.colour(allocation[i]))
+}
 
-## Rough work ####
-# 
-# bycatch <- function(alph, harv, n, K){
-#   alph * harv * (n/K)
-# }
-# 
-# bycatch(0.1, 100, 500, 500)
-# 
-# z <- bycatch(0.1, 100, 0:500, 500)
-# plot(z)
-
-# plot(harvShare(D=0:100, nBox=9, nBoxSpared=3, allo = "unreserved"))
-# 
-# testMat <- matrix(nrow=3,ncol=3)
-# 
-# # Function for distributing dispersal probabilities to each cell of matrix relative to each other cell
-# dispMapGen <- function(mat, rowOfInt, colOfInt){
-#   boxOfInt <- mat[rowOfInt, colOfInt]
-#   
-# }
-# 
-# rowOfInt <- 1
-# colOfInt <- 1
-# mat <- testMat908788
-# boxOfInt <- mat[rowOfInt,colOfInt]
-# boxOfInt 
-# mat
-# dist(mat)
-# 
-# rdist(x1, x2)
-# 
-## WORK SPACE####
-# 
-# mat <- matrix(ncol=3,nrow=3)
-# mat
-# 
-# dispMat <- matrix(ncol=3,nrow=3)
-# dispMat
-# 
-# # For cell [1,1], just across columns
-# nCol <- 3
-# nRow <- 3
-# nBox <- nCol*nRow
-# 
-# spatialMatList <- vector(length = nBox, mode = 'list')
-# spatialMat <- matrix(ncol=nCol,nrow=nRow)
-# 
-# # Βuilding function for calculating distance between all boxes
-# for (z in 1:nBox){
-#   for (i in 1:nCol){
-#     for (j in 1:nRow){
-#       spatialMat[j,i] <- (j-1+i-1)
-#     }
-#   }
-#   spatialMatList <- 
-# }
-# spatialMat
-# 
-# 
-# #(Don't forget absolute values)
-# 
-# # Function for assigning dispersal probability matrix for each cell
-# dispMat <- function(nBox,matRows,matCols){
-#   dispMatList <- vector(length = nBox, mode = 'list')
-#   for(i in 1:nBox){
-#    dispMatList[[i]] <- matrix(nrow = matRows, ncol = matCols)
-#    # Calculation of distances between cells, build function for this
-#   }
-# }
-# 
-# # Immigrant/emigrant function
-# dispersal <- function(dispMat){
-# 
-# }
-# 
-# matrix()
+# Unified plot
+par(mfcol=c(sqrt(n.box),sqrt(n.box)))
+for(i in 1:n.box){
+  plot(1:n.time, n.habitat[i,], ylim = c(0,K.habitat*1.2), main = paste('Abundance of habitat species in box', i), col = plot.colour(allocation[i]))
+}
