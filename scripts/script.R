@@ -6,9 +6,11 @@
 ## Rebuild grid/dispersal functions so that real data can be input into them
 ## Split migration function so each species has unique migration grid
 ## Rebuild core model functions so that populations of different species interrelate (i.e. so if catch function is dynamic, then a decrease in catch caused by drop of species in one cell leads to a decrease in bycatch in that cell)
+## Split script into multiple files
+## Produce figures as recommended by MH during meeting (biomass of 3 key species at end of simulation for all sparing and sharing combos)
+## ^ That means moving from proportion spared to number of boxes spared
 
 # Notes
-#
 
 # Required packages ####
 library(tidyverse)
@@ -33,9 +35,9 @@ bev.holt.hab <- function(n, r, K, allocation, habitat.sens){
 # Harvest for a particular box function
 harv.share <- function(catch, n.box, n.box.spared, allocation){
   if(allocation == "reserve"){ # Each box is allocated ("allocation") as a reserve or not. If allocated as a reserve, no catch is taken from it
-  0
+    0
   } else {
-    catch / (n.box - n.box.spared) # If a box is not allocated as a reserve, then a proportional share of the total catch is taken from it 
+    catch / (n.box - n.box.spared) # If a box is not allocated as a reserve, then a proportional share of the total catch is taken from it
   }
 }
 
@@ -207,8 +209,8 @@ abund.plot(n.bycatch, K.bycatch)
 abund.plot(n.habitat, K.habitat)
 
 # Dispersal grid for each cell
-# for(i in 1:n.box){
-#   t <- raster(grids[[i]])
-#   plot(t, legend = FALSE)
-#   text(t, digits = 2)
-# }
+for(i in 1:n.box){
+  t <- raster(grids[[i]])
+  plot(t, legend = FALSE)
+  text(t, digits = 2)
+}
