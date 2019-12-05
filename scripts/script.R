@@ -61,13 +61,13 @@ dist.finder <- function(n.box, origin.box){
 
 # Function that creates matrix of probabilities of dispersing from one grid cell to another. Hacky and just for testing maths that depends on dispersal grid, will need to be replaced
 prob.finder <- function(dist.grid, disp.on){ # Some redundant arguments
-  if(disp.on == TRUE){
+  if(disp.on == TRUE){ # For turning dispersal on
     prob.grid <- 0.5-(dist.grid*0.2) # Begins conversion of distance grid into dispersal probability grid. Hacky -- numbers are arbitrary
     prob.grid[prob.grid < 0] <- 0 # Converts any "probabilities" less than 0 to 0
     comb <- cellStats(prob.grid, stat='sum') # Ensuring all probabilities add to 1
     prob.grid <- prob.grid/comb # Ensuring all probabilities add to 1
     prob.grid <- as.matrix(prob.grid) # Converting the raster into a matrix for use 
-  } else {
+  } else { # If dispersal is not on, then all individuals will be retained in the grid in which they were born
     prob.grid <- 1-(dist.grid) # Begins conversion of distance grid into dispersal probability grid. Hacky -- numbers are arbitrary
     prob.grid[prob.grid < 1] <- 0 # Converts any "probabilities" less than 1 to 0
     prob.grid <- as.matrix(prob.grid) # Converting the raster into a matrix for use 
@@ -78,8 +78,8 @@ prob.finder <- function(dist.grid, disp.on){ # Some redundant arguments
 grid.maker <- function(n.box, disp.on){
   grid.list <- vector(length = n.box, mode = 'list') # Creates an empty list to store matrices
   for(i in 1:n.box){ 
-  disp.mat <- dist.finder(n.box, i)
-  grid.list[[i]] <- prob.finder(disp.mat, disp.on)
+  disp.mat <- dist.finder(n.box, i) # Finds distances between all boxes
+  grid.list[[i]] <- prob.finder(disp.mat, disp.on) # Converts distances to probabilities and saves into a list
   }
   grid.list
 }
@@ -95,23 +95,8 @@ migration <- function(species, time, box, grids, n.box){
 
 # Allocating cells to spared or shared function
 allocate <- function(n.box, n.box.spared){
-  c(rep("reserve", n.box.spared),rep("no reserve", n.box-n.box.spared))
+  c(rep("reserve", n.box.spared), rep("no reserve", n.box-n.box.spared))
 }
-
-# Working but messily constructed dispersal functions. Use in case neatly constructed functions break
-# for(i in 1:(n.time-1)){ # For each time step
-#   for(j in 1:n.box){ # For each box
-#     n.fished[j,i+1] <- bev.holt(migration(k), r.fished, K.fished) - harv.share(catch, n.box, n.box.spared, allocation[j])
-#   }
-# }
-# 
-# migration <- function(k){
-#   result <- vector(mode = "integer", length = n.box)
-#   for(k in 1:n.box){
-#     result[k] <- n.fished[k,i]*grids[[k]][j]
-#   }
-#   sum(result)
-# }
 
 # Parameters ####
 
@@ -141,11 +126,14 @@ disp.on <- FALSE # Value must be TRUE for dispersal to be on
 
 # Running model ####
 
+# Creating one-off objects
+
 n.fished.list <- vector(length = n.box, mode = 'list') # Creates an empty list to store matrices
-n.bycatch.list <- vector(length = n.box, mode = 'list') # Creates an empty list to store matrices
-n.habitat.list <- vector(length = n.box, mode = 'list') # Creates an empty list to store matrices
+n.bycatch.list <- vector(length = n.box, mode = 'list')
+n.habitat.list <- vector(length = n.box, mode = 'list')
 grids <- grid.maker(n.box, disp.on) # Creating 1 dispersal probability grid for each cell
-for(z in 1:n.box){
+
+for(z in 0:n.box){ # For all levels of sparing
   # Creating objects needed for simulation based on parameters
   allocation <- allocate(n.box, z) # Allocating specific boxes to spared or shared
 
@@ -173,13 +161,14 @@ for(z in 1:n.box){
       n.habitat[j,i+1] <- bev.holt.hab(migration(n.habitat, i, j, grids, n.box), r.habitat, K.habitat, allocation[j], habitat.rate)
     }
   }
-  n.fished.list[[z]] <- n.fished
-  n.bycatch.list[[z]] <- n.bycatch
-  n.habitat.list[[z]] <- n.habitat
+  n.fished.list[[z+1]] <- n.fished
+  n.bycatch.list[[z+1]] <- n.bycatch
+  n.habitat.list[[z+1]] <- n.habitat
 }
 
 # Processing list data
 
+# Function for processing data
 abun.finder <- function(species.list){
   last.gen <- lapply(species.list, FUN = function(x) x[,n.time])
   abun <- lapply(last.gen, FUN = mean)
@@ -187,6 +176,7 @@ abun.finder <- function(species.list){
   abun <- rbindlist(abun, idcol = TRUE)
   abun <- as.data.frame(abun) # Finishes conversion of data to data frame 
   colnames(abun) <- c("spared boxes", paste("abundance of", deparse(substitute(species.list)))) # Renames columns
+  abun[,"spared boxes"] <- abun[,"spared boxes"]-1
   abun
 }
 
@@ -216,31 +206,31 @@ plot.colour <- function(allocation){
 }
 
 # Function for producing abundance plots
-abund.plot <- function(species.list, K.species, n.box.spared){
+abun.plot <- function(species.list, K.species, n.box.spared){
   allocation <- allocate(n.box, n.box.spared)
   par(mfcol=c(sqrt(n.box), sqrt(n.box)), 
       mai = c(0.2, 0.2, 0.2, 0.2))
   for(i in 1:n.box){
     plot(x = 1:n.time, 
-         y = species.list[[n.box.spared]][i,], 
+         y = species.list[[n.box.spared+1]][i,], 
          ylim = c(0,K.species*1.2), 
          col = plot.colour(allocation[i]), 
          ylab = '',
          xlab = '')
     text(x = n.time/2, 
          y = K.species/4, 
-         labels = paste('Box', i, deparse(substitute(species))))
+         labels = paste('Box', i, deparse(substitute(species.list))))
   }
 }
 
 # Population of fished species per box over time 
-abund.plot(n.fished.list, K.fished, 18)
+abun.plot(n.fished.list, K.fished, 18)
 
 # Population of bycatch species per box over time 
-abund.plot(n.bycatch.list, K.bycatch, 18)
+abun.plot(n.bycatch.list, K.bycatch, 18)
 
 # Population of habitat sensitive species per box over time 
-abund.plot(n.habitat.list, K.habitat, 18)
+abun.plot(n.habitat.list, K.habitat, 18)
 
 # Dispersal grid for each cell
 # for(i in 1:n.box){
