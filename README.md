@@ -2,8 +2,8 @@
 
 A model for exploring sea sparing and sharing in a spatially explicit setting for three species.
 
-# Instructions
+## How to use
 
-To run simulations, run the entirety of 'runModel.R'.
-
-To view outputs after running simulations, run the entirety of 'figs.R'.
+1. Adjust parameters to 'parameters.R'.
+2. Run simulations by running entirety of 'runModel.R'.
+3. View outputs by running entirety of 'figs.R'.
