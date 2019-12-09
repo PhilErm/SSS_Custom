@@ -122,7 +122,7 @@ habitat.rate <- 0.5 # The proportionate decrease in carrying capacity if habitat
 n.time <- 20 # Length of time to calculate
 n.box <- 36 # Number of boxes. Must be divisble by 2 and a perfect square
 n.box.spared <- 35 # Number of boxes spared
-disp.on <- FALSE # Value must be TRUE for dispersal to be on
+disp.on <- TRUE # Value must be TRUE for dispersal to be on
 
 # Running model ####
 
@@ -233,8 +233,13 @@ abun.plot(n.bycatch.list, K.bycatch, 18)
 abun.plot(n.habitat.list, K.habitat, 18)
 
 # Dispersal grid for each cell
-# for(i in 1:n.box){
-#   t <- raster(t(grids[[i]])) # Check transposition to make sure that dispersal is being applied propoerly
-#   plot(t, legend = FALSE)
-#   text(t, digits = 2)
-# }
+for(i in 1:n.box){
+  t <- raster(t(grids[[i]])) # Check transposition to make sure that dispersal is being applied propoerly
+  plot(t, legend = FALSE)
+  text(t, digits = 2)
+}
+
+# Example dispersal grid
+par(mfcol=c(1, 1))
+plot(raster(t(grids[[1]])))
+text(raster(t(grids[[1]])), digits = 3)

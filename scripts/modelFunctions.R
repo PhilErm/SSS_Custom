@@ -1,0 +1,89 @@
+# Model functions
+# All model functions
+
+# Required packages ####
+
+library(gdistance)
+
+# Functions ####
+
+# Beverton-Holt growth function
+bev.holt <- function(n, r, K){
+  (r * K * n) / (K + (r - 1) * n)
+}
+
+# Beverton-Holt growth function that can account for habitat damage
+bev.holt.hab <- function(n, r, K, allocation, habitat.rate){
+  if(allocation == "reserve"){
+    (r * K * n) / (K + (r - 1) * n) 
+  } else {
+    (r * K * habitat.rate * n) / ((K * habitat.rate) + (r - 1) * n) # If the grid cell is fished, carrying capacity is lowered
+  }
+}
+
+# Harvest for a particular box function
+harv.share <- function(catch, n.box, n.box.spared, allocation){
+  if(allocation == "reserve"){ # Each box is allocated ("allocation") as a reserve or not. If allocated as a reserve, no catch is taken from it
+    0
+  } else {
+    catch / (n.box - n.box.spared) # If a box is not allocated as a reserve, then a proportional share of the total catch is taken from it
+  }
+}
+
+# Bycatch for a particular box function
+bycatch <- function(catch, n.box, n.box.spared, allocation, bycatch.rate){
+  if(allocation == "reserve"){ # Each box is allocated ("allocation") as a reserve or not. If allocated as a reserve, no bycatch is taken from it
+    0
+  } else {
+    bycatch.rate * catch / (n.box - n.box.spared)  # If a box is not allocated as a reserve, then a proportional share of the total catch is taken from it, which causes a proportional amount of bycatch
+  }
+}
+
+# Distance from one grid cell to all other grid cells function
+dist.finder <- function(n.box, origin.box){
+  rast.dims <- sqrt(n.box) # Determining grid dimensions
+  disp.grid <- raster(ncol=rast.dims, nrow=rast.dims, xmn=-rast.dims, xmx=rast.dims, ymn=-rast.dims, ymx=rast.dims) # Building a raster of chosen dimensions
+  disp.grid[] <- 1:ncell(disp.grid) # Numbering raster grid cells left to right, top to bottom
+  disp.dists <- gridDistance(disp.grid, origin=origin.box) # Calculating distance from origin box to other boxes
+  disp.dists <- disp.dists/(220000) # Hacky correction so that distances are approximately in units. Needs to be updated
+  disp.dists <- t(disp.dists) # Transposing so that loops will loop dispersal over boxes in the same way as they loop through boxes
+}
+
+# Function that creates matrix of probabilities of dispersing from one grid cell to another. Hacky and just for testing maths that depends on dispersal grid, will need to be replaced
+prob.finder <- function(dist.grid, disp.on){ # Some redundant arguments
+  if(disp.on == TRUE){ # For turning dispersal on
+    prob.grid <- 0.5-(dist.grid*0.2) # Begins conversion of distance grid into dispersal probability grid. Hacky -- numbers are arbitrary
+    prob.grid[prob.grid < 0] <- 0 # Converts any "probabilities" less than 0 to 0
+    comb <- cellStats(prob.grid, stat='sum') # Ensuring all probabilities add to 1
+    prob.grid <- prob.grid/comb # Ensuring all probabilities add to 1
+    prob.grid <- as.matrix(prob.grid) # Converting the raster into a matrix for use 
+  } else { # If dispersal is not on, then all individuals will be retained in the grid in which they were born
+    prob.grid <- 1-(dist.grid) # Begins conversion of distance grid into dispersal probability grid. Hacky -- numbers are arbitrary
+    prob.grid[prob.grid < 1] <- 0 # Converts any "probabilities" less than 1 to 0
+    prob.grid <- as.matrix(prob.grid) # Converting the raster into a matrix for use 
+  }
+}
+
+# Making a dispersal probability matrix for each cell function
+grid.maker <- function(n.box, disp.on){
+  grid.list <- vector(length = n.box, mode = 'list') # Creates an empty list to store matrices
+  for(i in 1:n.box){ 
+    disp.mat <- dist.finder(n.box, i) # Finds distances between all boxes
+    grid.list[[i]] <- prob.finder(disp.mat, disp.on) # Converts distances to probabilities and saves into a list
+  }
+  grid.list
+}
+
+# Summation of all movement between cells function
+migration <- function(species, time, box, grids, n.box){
+  result <- vector(mode = "integer", length = n.box) # Create a vector for saving the number of migrants coming from each box to some box of interest
+  for(l in 1:n.box){ # For each box
+    result[l] <- species[l,time]*grids[[l]][box] # Look at the population size of a box, multiply it by the proportion of individuals that ought to move from there to the box of interest
+  }
+  sum(result) # Sum all the total number of individuals moving into the box of interest and being retained in the box
+}
+
+# Allocating cells to spared or shared function
+allocate <- function(n.box, n.box.spared){
+  c(rep("reserve", n.box.spared), rep("no reserve", n.box-n.box.spared))
+}
