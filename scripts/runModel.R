@@ -46,16 +46,16 @@ for(z in 0:n.box){ # For all levels of sparing
   
   # Running the model
   for(i in 1:(n.time-1)){ # For each time step
-    fishable.biom[i] <- tot.biom(n.fished, i, n.box, allocation) # Calculating total biomass in fishable cells
+    fishable.biom[i] <- tot.biom(n.fished[,i], n.box, allocation) # Calculating total biomass in fishable cells
     for(j in 1:n.box){ # For each box
-      n.fished[j,i+1] <- bev.holt(migration(n.fished, i, j, grids, n.box), r.fished, K.fished) - prop.harv.share(catch, n.fished[j,i], fishable.biom[i], allocation[j])
-      n.bycatch[j,i+1] <- bev.holt(migration(n.bycatch, i, j, grids, n.box), r.bycatch, K.bycatch) - bycatch(catch, n.box, z, allocation[j], bycatch.rate)
-      n.habitat[j,i+1] <- bev.holt.hab(migration(n.habitat, i, j, grids, n.box), r.habitat, K.habitat, allocation[j], habitat.rate)
+      n.fished[j,i+1] <- bev.holt(migration(n.fished[,i], grids, j, n.box), r.fished, K.fished) - prop.harv.share(catch, n.fished[j,i], fishable.biom[i], allocation[j])
+      n.bycatch[j,i+1] <- bev.holt(migration(n.bycatch[,i], grids, j, n.box), r.bycatch, K.bycatch) - bycatch(catch, n.box, z, allocation[j], bycatch.rate)
+      n.habitat[j,i+1] <- bev.holt.hab(migration(n.habitat[,i], grids, j, n.box), r.habitat, K.habitat, allocation[j], habitat.rate)
     }
   }
   
   # Saving simulation results into list
-  n.fished.list[[z+1]] <- n.fished
+  n.fished.list[[z+1]] <- n.fished # z+1 because can't save anything in list item [[0]], though we start our loop at 0
   n.bycatch.list[[z+1]] <- n.bycatch
   n.habitat.list[[z+1]] <- n.habitat
 }

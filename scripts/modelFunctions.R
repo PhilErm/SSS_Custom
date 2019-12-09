@@ -31,13 +31,13 @@ prop.harv.share <- function(catch, loc.biom, tot.biom, allocation){
 }
 
 # Total biomass in unreserved boxes function
-tot.biom <- function(species, time, n.box, allocation){
+tot.biom <- function(species, n.box, allocation){
   total <- vector(mode = "integer", length = n.box) # Create a vector for saving the total number of fishable animals
   for(l in 1:n.box){ # For each box
     if(allocation[l] == "reserve"){ # Each box is allocated ("allocation") as a reserve or not. If allocated as a reserve, fishable abundance = 0
       total[l] <- 0
     } else {
-      total[l] <- species[l, time] # If a box is not allocated as a reserve, then the number of animals in it is saved into the vector
+      total[l] <- species[l] # If a box is not allocated as a reserve, then the number of animals in it is saved into the vector
     }
   }
   total <- sum(total) # Sum total number of fishable individuals
@@ -89,13 +89,15 @@ grid.maker <- function(n.box, disp.on){
 }
 
 # Summation of all movement between cells function
-migration <- function(species, time, box, grids, n.box){
+migration <- function(species, grids, box.of.int, n.box){
   result <- vector(mode = "integer", length = n.box) # Create a vector for saving the number of migrants coming from each box to some box of interest
   for(l in 1:n.box){ # For each box
-    result[l] <- species[l,time]*grids[[l]][box] # Look at the population size of a box, multiply it by the proportion of individuals that ought to move from there to the box of interest
+    result[l] <- species[l]*grids[[l]][box.of.int] # Look at the population size of a box, multiply it by the proportion of individuals that ought to move from there to the box of interest
   }
   sum(result) # Sum all the total number of individuals moving into the box of interest and being retained in the box
 }
+
+#migration(n.fished.list[[18]][,10], grids, 19, 36)
 
 # Allocating cells to spared or shared function
 allocate <- function(n.box, n.box.spared){

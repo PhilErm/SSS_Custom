@@ -21,4 +21,4 @@ habitat.rate <- 0.5 # The proportionate decrease in carrying capacity if habitat
 # Simulation
 n.time <- 20 # Length of time to calculate
 n.box <- 36 # Number of boxes. Must be a perfect square to facilitate the construction of a grid
-disp.on <- FALSE # Value must be TRUE for dispersal to be occur
+disp.on <- TRUE # Value must be TRUE for dispersal to be occur

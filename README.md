@@ -10,7 +10,4 @@ A model for exploring sea sparing and sharing in a spatially explicit setting fo
 
 ## To-dos
 
-* Implement Schaefer catch function.
 * Move replicated code into functions.
-* Alter model internals so that changes in spatial allocation of pressure on fished species change spatial allocation of pressure on other species.
-* Rewrite functions to remove i, j, etc. from arguments.
