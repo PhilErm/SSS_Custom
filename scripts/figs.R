@@ -28,13 +28,13 @@ ggplot(data = plot.results) +
 # Figure: the abundance of each species in each grid cell over time at a specified sparing/sharing level ####
 
 # Fished species
-abun.plot(n.fished.list, K.fished, 18)
+abun.plot(n.fished.list, K.fished, n.box/2)
 
 # Bycatch species
-abun.plot(n.bycatch.list, K.bycatch, 18)
+abun.plot(n.bycatch.list, K.bycatch, n.box/2)
 
 # Habitat sensitive species
-abun.plot(n.habitat.list, K.habitat, 18)
+abun.plot(n.habitat.list, K.habitat, n.box/2)
 
 # Figure: an example of dispersal probabilities from a specified grid cell ####
 

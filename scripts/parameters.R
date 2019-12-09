@@ -4,7 +4,7 @@
 r.fished <- 2 # Intrinsic growth rate
 K.fished <- 500 # Carrying capacity (per box)
 init.fished <- 250 # Initial size of population (per box)
-catch <- 200 # Absolute catch required across entire seascape per timestep
+catch <- 1000 # Absolute catch required across entire seascape per timestep
 
 # Bycatch species
 r.bycatch <- 2

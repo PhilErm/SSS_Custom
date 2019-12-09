@@ -7,3 +7,10 @@ A model for exploring sea sparing and sharing in a spatially explicit setting fo
 1. Adjust parameters in 'parameters.R'.
 2. Run simulations by running entirety of 'runModel.R'.
 3. View outputs by running entirety of 'figs.R'.
+
+## To-dos
+
+* Implement Schaefer catch function.
+* Move replicated code into functions.
+* Alter model internals so that changes in spatial allocation of pressure on fished species change spatial allocation of pressure on other species.
+* Rewrite functions to remove i, j, etc. from arguments.

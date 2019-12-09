@@ -21,13 +21,27 @@ bev.holt.hab <- function(n, r, K, allocation, habitat.rate){
   }
 }
 
-# Harvest for a particular box function
-harv.share <- function(catch, n.box, n.box.spared, allocation){
+# Proportional harvest for a particular box function
+prop.harv.share <- function(catch, loc.biom, tot.biom, allocation){
   if(allocation == "reserve"){ # Each box is allocated ("allocation") as a reserve or not. If allocated as a reserve, no catch is taken from it
     0
   } else {
-    catch / (n.box - n.box.spared) # If a box is not allocated as a reserve, then a proportional share of the total catch is taken from it
+    catch * (loc.biom / tot.biom) # If a box is not allocated as a reserve, then a proportional share of the total catch is taken from it depending on the biomass in the box
   }
+}
+
+# Total biomass in unreserved boxes function
+tot.biom <- function(species, time, n.box, allocation){
+  total <- vector(mode = "integer", length = n.box) # Create a vector for saving the total number of fishable animals
+  for(l in 1:n.box){ # For each box
+    if(allocation[l] == "reserve"){ # Each box is allocated ("allocation") as a reserve or not. If allocated as a reserve, fishable abundance = 0
+      total[l] <- 0
+    } else {
+      total[l] <- species[l, time] # If a box is not allocated as a reserve, then the number of animals in it is saved into the vector
+    }
+  }
+  total <- sum(total) # Sum total number of fishable individuals
+  total
 }
 
 # Bycatch for a particular box function
