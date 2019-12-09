@@ -6,4 +6,4 @@ A model for exploring sea sparing and sharing in a spatially explicit setting fo
 
 To run simulations, run the entirety of 'runModel.R'.
 
-To view outputs after running simulations, run the entirery of 'figs.R'.
+To view outputs after running simulations, run the entirety of 'figs.R'.
