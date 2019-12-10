@@ -13,11 +13,11 @@ bev.holt <- function(n, r, K){
 }
 
 # Beverton-Holt growth function that can account for habitat damage
-bev.holt.hab <- function(n, r, K, allocation, habitat.rate){
+bev.holt.hab <- function(n, r, K, allocation, habitat.const, effort){
   if(allocation == "reserve"){
     (r * K * n) / (K + (r - 1) * n) 
   } else {
-    (r * K * habitat.rate * n) / ((K * habitat.rate) + (r - 1) * n) # If the grid cell is fished, carrying capacity is lowered
+    (K / ((effort * habitat.const)+1) * r * n) / ((K / ((effort * habitat.const)+1)) + (r - 1) * n) # If the grid cell is fished, carrying capacity is lowered
   }
 }
 
@@ -45,11 +45,11 @@ tot.biom <- function(species, n.box, allocation){
 }
 
 # Bycatch for a particular box function
-bycatch <- function(catch, n.box, n.box.spared, allocation, bycatch.rate){
+bycatch <- function(species, catch, n.box, n.box.spared, allocation, bycatch.const){
   if(allocation == "reserve"){ # Each box is allocated ("allocation") as a reserve or not. If allocated as a reserve, no bycatch is taken from it
     0
   } else {
-    bycatch.rate * catch / (n.box - n.box.spared)  # If a box is not allocated as a reserve, then a proportional share of the total catch is taken from it, which causes a proportional amount of bycatch
+    bycatch.const * (catch / (n.box - n.box.spared)) * species # If a box is not allocated as a reserve, then a proportional share of the total catch is taken from it, which causes a proportional amount of bycatch based on the size of the bycatch population
   }
 }
 
@@ -81,10 +81,14 @@ prob.finder <- function(dist.grid, disp.on){ # Some redundant arguments
 # Making a dispersal probability matrix for each cell function
 grid.maker <- function(n.box, disp.on){
   grid.list <- vector(length = n.box, mode = 'list') # Creates an empty list to store matrices
+  pb <- txtProgressBar(min = 1, max = n.box, style = 3)
   for(i in 1:n.box){ 
+    cat(" Generating dispersal grid", i, "of", n.box)
+    setTxtProgressBar(pb, i)
     disp.mat <- dist.finder(n.box, i) # Finds distances between all boxes
     grid.list[[i]] <- prob.finder(disp.mat, disp.on) # Converts distances to probabilities and saves into a list
   }
+  close(pb)
   grid.list
 }
 

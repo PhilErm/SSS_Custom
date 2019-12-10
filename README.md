@@ -5,8 +5,7 @@ A model for exploring sea sparing and sharing in a spatially explicit setting fo
 ## How to use
 
 1. Adjust parameters in 'parameters.R'.
-2. Run simulations by running entirety of 'runModel.R'.
-3. View outputs by running entirety of 'figs.R'.
+2. Run simulations and generate output figures by running entirety of 'runModel.R'.
 
 ## To-dos
 
