@@ -10,3 +10,7 @@ A model for exploring sea sparing and sharing in a spatially explicit setting fo
 ## To-dos
 
 * Move replicated code into functions.
+* Account for negative population sizes.
+* Rebuild dispersal functionality.
+* Build alternative catch model.
+* Review habitat damage function.

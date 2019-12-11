@@ -20,5 +20,5 @@ habitat.const <- 0.0001
 
 # Simulation
 n.time <- 20 # Length of time to calculate
-n.box <- 36 # Number of boxes. Must be a perfect square to facilitate the construction of a grid
-disp.on <- FALSE # Value must be TRUE for dispersal to be occur
+n.box <- 36 # Number of boxes. Must be a perfect square to facilitate the construction of a symmetrical grid
+disp.on <- TRUE # Value must be TRUE for dispersal to be occur
