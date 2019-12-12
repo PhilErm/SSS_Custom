@@ -13,11 +13,11 @@ bev.holt <- function(n, r, K){
 }
 
 # Beverton-Holt growth function that can account for habitat damage
-bev.holt.hab <- function(n, r, K, allocation, habitat.const, effort){
+bev.holt.hab <- function(n, r, K, allocation, habitat.const, catch, n.box, n.box.spared){
   if(allocation == "reserve"){
     (r * K * n) / (K + (r - 1) * n) 
   } else {
-    (K / ((effort * habitat.const)+1) * r * n) / ((K / ((effort * habitat.const)+1)) + (r - 1) * n) # If the grid cell is fished, carrying capacity is lowered
+    (K / (((catch / (n.box - n.box.spared)) * habitat.const)+1) * r * n) / ((K / (((catch / (n.box - n.box.spared)) * habitat.const)+1)) + (r - 1) * n) # If the grid cell is fished, carrying capacity is lowered
   }
 }
 
@@ -58,17 +58,20 @@ dist.finder <- function(n.box, origin.box){
   rast.dims <- sqrt(n.box) # Determining grid dimensions
   disp.grid <- raster(ncol=rast.dims, nrow=rast.dims, xmn=-rast.dims, xmx=rast.dims, ymn=-rast.dims, ymx=rast.dims) # Building a raster of chosen dimensions
   disp.grid[] <- 1:ncell(disp.grid) # Numbering raster grid cells left to right, top to bottom
-  disp.dists <- gridDistance(disp.grid, origin=origin.box) # Calculating distance from origin box to other boxes
-  disp.dists <- disp.dists/(220000) # Hacky correction so that distances are approximately in units. Needs to be updated
-  disp.dists <- t(disp.dists) # Transposing so that loops will loop dispersal over boxes in the same way as they loop through boxes
+  crs(disp.grid) <- "+proj=utm +zone=15 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" # Changing CRS. Hacky, but will eventually produce correct distances
+  disp.dists <- gridDistance(disp.grid, origin=origin.box)/2 # Calculating distance from origin box to other boxes. Dividing by 2 to account for CRS
+  disp.dists <- t(disp.dists) # Transposing so that loops will loop dispersal over boxes in the same way as the model itself loops through boxes
 }
 
 # Function that creates matrix of probabilities of dispersing from one grid cell to another. Hacky and just for testing maths that depends on dispersal grid, will need to be replaced
-prob.finder <- function(dist.grid, disp.on){ # Some redundant arguments
+prob.finder <- function(dist.grid, disp.on, disp.factor, disp.friction){ # Some redundant arguments
   if(disp.on == TRUE){ # For turning dispersal on
-    prob.grid <- 0.5-(dist.grid*0.2) # Begins conversion of distance grid into dispersal probability grid. Hacky -- numbers are arbitrary
+    prob.grid <- 1/dist.grid # Inverting distances so smaller numbers are farther away
+    prob.grid <- prob.grid-disp.friction # Making some numbers negative to limit the maximum dispersal distance
     prob.grid[prob.grid < 0] <- 0 # Converts any "probabilities" less than 0 to 0
-    comb <- cellStats(prob.grid, stat='sum') # Ensuring all probabilities add to 1
+    prob.grid[prob.grid == Inf] <- NA # Converts single cell with Inf in it to NA
+    prob.grid[is.na(prob.grid)] <- cellStats(prob.grid, stat='sum')*disp.factor # Converts NA cell to an actual value
+    comb <- cellStats(prob.grid, stat='sum') # Part of rescaling to ensure the sum of all cell probabilities adds up to 1
     prob.grid <- prob.grid/comb # Ensuring all probabilities add to 1
     prob.grid <- as.matrix(prob.grid) # Converting the raster into a matrix for use 
   } else { # If dispersal is not on, then all individuals will be retained in the grid in which they were born
@@ -86,7 +89,7 @@ grid.maker <- function(n.box, disp.on){
     cat(" Generating dispersal grid", i, "of", n.box)
     setTxtProgressBar(pb, i)
     disp.mat <- dist.finder(n.box, i) # Finds distances between all boxes
-    grid.list[[i]] <- prob.finder(disp.mat, disp.on) # Converts distances to probabilities and saves into a list
+    grid.list[[i]] <- prob.finder(disp.mat, disp.on, disp.factor, disp.friction) # Converts distances to probabilities and saves into a list
   }
   close(pb)
   grid.list

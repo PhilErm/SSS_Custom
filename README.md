@@ -12,5 +12,5 @@ A model for exploring sea sparing and sharing in a spatially explicit setting fo
 * Move replicated code into functions.
 * Account for negative population sizes.
 * Rebuild dispersal functionality.
+  * Allow each species to have own dispersal grid.
 * Build alternative catch model.
-* Review habitat damage function.

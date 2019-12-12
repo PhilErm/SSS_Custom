@@ -53,7 +53,7 @@ for(z in 0:n.box){ # For all levels of sparing
     for(j in 1:n.box){ # For each box
       n.fished[j,i+1] <- bev.holt(migration(n.fished[,i], grids, j, n.box), r.fished, K.fished) - prop.harv.share(catch, n.fished[j,i], fishable.biom[i], allocation[j])
       n.bycatch[j,i+1] <- bev.holt(migration(n.bycatch[,i], grids, j, n.box), r.bycatch, K.bycatch) - bycatch(n.bycatch[j,i], catch, n.box, z, allocation[j], bycatch.const)
-      n.habitat[j,i+1] <- bev.holt.hab(migration(n.habitat[,i], grids, j, n.box), r.habitat, K.habitat, allocation[j], habitat.const, catch)
+      n.habitat[j,i+1] <- bev.holt.hab(migration(n.habitat[,i], grids, j, n.box), r.habitat, K.habitat, allocation[j], habitat.const, catch, n.box, z)
     }
   }
   
