@@ -21,21 +21,31 @@ plot.results <- results %>% # Creating column denoting proportion of seascape sp
   mutate("prop.spared" = `spared boxes`/n.box)
 
 # Figure
+
 fig <- ggplot(data = plot.results) +
   geom_line(mapping = aes(x = prop.spared, y = n, color = species)) +
+  labs(x = "Proportion of seascape spared", y = "Mean number of individuals per cell") +
+  scale_colour_discrete(name = " ", labels = c("Fished species", "Bycatch species", "Habitat species")) +
+  theme_bw()
+print(fig)
+
+fig <- ggplot(data = plot.results) +
+  geom_area(mapping = aes(x = prop.spared, y = n, fill = species), position = 'stack') +
+  labs(x = "Proportion of seascape spared", y = "Mean number of individuals per cell") +
+  scale_fill_discrete(name = " ", labels = c("Fished species", "Bycatch species", "Habitat species")) +
   theme_bw()
 print(fig)
 
 # Figure: the abundance of each species in each grid cell over time at a specified sparing/sharing level ####
 
 # Fished species
-abun.plot(n.fished.list, K.fished, n.box/2)
+abun.plot(n.fished.list, K.fished, n.box/2, fished.name)
 
 # Bycatch species
-abun.plot(n.bycatch.list, K.bycatch, n.box/2)
+abun.plot(n.bycatch.list, K.bycatch, n.box/2, bycatch.name)
 
 # Habitat sensitive species
-abun.plot(n.habitat.list, K.habitat, n.box/2)
+abun.plot(n.habitat.list, K.habitat, n.box/2, habitat.name)
 
 # Figure: an example of dispersal probabilities from a specified grid cell ####
 

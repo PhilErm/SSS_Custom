@@ -82,11 +82,11 @@ prob.finder <- function(dist.grid, disp.on, disp.factor, disp.friction){ # Some 
 }
 
 # Making a dispersal probability matrix for each cell function
-grid.maker <- function(n.box, disp.on){
+grid.maker <- function(n.box, disp.on, disp.factor, disp.friction, species.name){
   grid.list <- vector(length = n.box, mode = 'list') # Creates an empty list to store matrices
   pb <- txtProgressBar(min = 1, max = n.box, style = 3)
   for(i in 1:n.box){ 
-    cat(" Generating dispersal grid", i, "of", n.box)
+    cat(" Generating dispersal grid", i, "of", n.box, "for", species.name)
     setTxtProgressBar(pb, i)
     disp.mat <- dist.finder(n.box, i) # Finds distances between all boxes
     grid.list[[i]] <- prob.finder(disp.mat, disp.on, disp.factor, disp.friction) # Converts distances to probabilities and saves into a list

@@ -27,7 +27,7 @@ plot.colour <- function(allocation){
 }
 
 # Function for producing abundance over time plots for single simulations
-abun.plot <- function(species.list, K.species, n.box.spared){
+abun.plot <- function(species.list, K.species, n.box.spared, species.name){
   allocation <- allocate(n.box, n.box.spared)
   par(mfcol=c(sqrt(n.box), sqrt(n.box)), 
       mai = c(0.2, 0.2, 0.2, 0.2))
@@ -40,6 +40,6 @@ abun.plot <- function(species.list, K.species, n.box.spared){
          xlab = '')
     text(x = n.time/2, 
          y = K.species/4, 
-         labels = paste('Box', i, deparse(substitute(species.list))))
+         labels = paste('Box', i, species.name))
   }
 }

@@ -12,13 +12,15 @@ source("scripts/modelFunctions.R")
 
 # Running simulations ####
 
+# Creating grids to define dispersal probabilities
+grids.fished <- grid.maker(n.box, disp.on, fished.disp.factor, fished.disp.friction, fished.name) # Creating 1 dispersal probability grid for each cell
+grids.bycatch <- grid.maker(n.box, disp.on, bycatch.disp.factor, bycatch.disp.friction, bycatch.name)
+grids.habitat <- grid.maker(n.box, disp.on, habitat.disp.factor, habitat.disp.friction, habitat.name)
+
 # Creating empty lists for storing abundance results
 n.fished.list <- vector(length = n.box, mode = 'list')
 n.bycatch.list <- vector(length = n.box, mode = 'list')
 n.habitat.list <- vector(length = n.box, mode = 'list')
-
-# Creating grids to define dispersal probabilities
-grids <- grid.maker(n.box, disp.on) # Creating 1 dispersal probability grid for each cell
 
 # Running the model from no sparing (i.e. sharing, z = 0) and all levels of sparing (1 <= z <= n.box - 1)
 pb <- txtProgressBar(min = 0, max = n.box, style = 3)
@@ -51,9 +53,9 @@ for(z in 0:n.box){ # For all levels of sparing
   for(i in 1:(n.time-1)){ # For each time step
     fishable.biom[i] <- tot.biom(n.fished[,i], n.box, allocation) # Calculating total biomass in fishable cells
     for(j in 1:n.box){ # For each box
-      n.fished[j,i+1] <- bev.holt(migration(n.fished[,i], grids, j, n.box), r.fished, K.fished) - prop.harv.share(catch, n.fished[j,i], fishable.biom[i], allocation[j])
-      n.bycatch[j,i+1] <- bev.holt(migration(n.bycatch[,i], grids, j, n.box), r.bycatch, K.bycatch) - bycatch(n.bycatch[j,i], catch, n.box, z, allocation[j], bycatch.const)
-      n.habitat[j,i+1] <- bev.holt.hab(migration(n.habitat[,i], grids, j, n.box), r.habitat, K.habitat, allocation[j], habitat.const, catch, n.box, z)
+      n.fished[j,i+1] <- bev.holt(migration(n.fished[,i], grids.fished, j, n.box), r.fished, K.fished) - prop.harv.share(catch, n.fished[j,i], fishable.biom[i], allocation[j])
+      n.bycatch[j,i+1] <- bev.holt(migration(n.bycatch[,i], grids.bycatch, j, n.box), r.bycatch, K.bycatch) - bycatch(n.bycatch[j,i], catch, n.box, z, allocation[j], bycatch.const)
+      n.habitat[j,i+1] <- bev.holt.hab(migration(n.habitat[,i], grids.habitat, j, n.box), r.habitat, K.habitat, allocation[j], habitat.const, catch, n.box, z)
     }
   }
   
