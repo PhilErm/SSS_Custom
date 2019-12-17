@@ -8,7 +8,7 @@ source("scripts/figFunctions.R")
 # Figure: abundance for one sparing arrangement and one catch level ####
 
 # Parameters
-plot.catch <- 1500 # Level of catch to be plotted. See object `catch.spect` for all modelled catch levels
+plot.catch <- 1000 # Level of catch to be plotted. See object `catch.spect` for all modelled catch levels
 n.box.spared <- n.box/2 # Level of sparing to be plotted. See object `n.box` for highest possible sparing level
 
 # Fished species figure
@@ -111,4 +111,3 @@ print(fig)
 # prob.grid <- prob.grid/comb # Ensuring all probabilities add to 1
 # plot(prob.grid)
 # text(prob.grid, digits = 3)
-# prob.grid <- as.matrix(prob.grid) # Converting the raster into a matrix for use 

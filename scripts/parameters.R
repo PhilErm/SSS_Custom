@@ -51,11 +51,11 @@ catch <- 1000 # Absolute catch required across entire seascape per timestep if n
 
 # Catch spectrum
 catch.min <- 250 # Minimum catch value on catch spectrum
-catch.max <- 3000 # Maximum catch value on catch spectrum
+catch.max <- 1000 # Maximum catch value on catch spectrum
 catch.int <- 250 # Interval size of catch spectrum
 
 # Simulation ####
 
 n.time <- 20 # Length of time to calculate
 n.box <- 36 # Number of boxes. Must be a perfect square to facilitate the construction of a symmetrical grid
-disp.on <- FALSE # Value must be TRUE for dispersal to be occur
+disp.on <- TRUE # Value must be TRUE for dispersal to be occur
