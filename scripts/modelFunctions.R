@@ -104,8 +104,6 @@ migration <- function(species, grids, box.of.int, n.box){
   sum(result) # Sum all the total number of individuals moving into the box of interest and being retained in the box
 }
 
-#migration(n.fished.list[[18]][,10], grids, 19, 36)
-
 # Allocating cells to spared or shared function
 allocate <- function(n.box, n.box.spared){
   c(rep("reserve", n.box.spared), rep("no reserve", n.box-n.box.spared))

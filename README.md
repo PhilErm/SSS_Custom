@@ -12,4 +12,3 @@ A model for exploring sea sparing and sharing in a spatially explicit setting fo
 * Account for negative population sizes.
 * Rebuild dispersal functionality to accomodate dispersal kernels.
 * Build alternative catch model.
-* Implement spectrum of catch targets.
