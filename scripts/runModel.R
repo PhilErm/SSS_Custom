@@ -64,12 +64,12 @@ for(p in catch.spect){ # For all levels of catch
     
     # Running the model
     for(i in 1:(n.time-1)){ # For each time step
-      fishable.biom[i] <- tot.biom(n.fished[,i], n.box, allocation) # Calculating total biomass in fishable cells
+      eff.dist <- whole.eff(method=catch.method, species=n.fished[,i], allocation=allocation, catch=p, catch.const=catch.const, n.box=n.box)
       for(j in 1:n.box){ # For each box
-        n.fished[j,i+1] <- bev.holt(migration(n.fished[,i], grids.fished, j, n.box), r.fished, K.fished) - prop.harv.share(p, n.fished[j,i], fishable.biom[i], allocation[j])
-        n.bycatch[j,i+1] <- bev.holt(migration(n.bycatch[,i], grids.bycatch, j, n.box), r.bycatch, K.bycatch) - bycatch(n.bycatch[j,i], p, n.box, z, allocation[j], bycatch.const)
-        n.habitat[j,i+1] <- bev.holt.hab(migration(n.habitat[,i], grids.habitat, j, n.box), r.habitat, K.habitat, allocation[j], habitat.const, p, n.box, z)
-        n.fished[j,i+1] <- ifelse(n.fished[j,i+1] <= 0 || is.na(n.fished[j,i+1]), 0, n.fished[j,i+1]) # Adjusting all negative population sizes to 0.
+        n.fished[j,i+1] <- bev.holt(migration(n.fished[,i], grids.fished, j, n.box), r.fished, K.fished) - harv.from.eff(eff.dist[j], n.fished[j,i], catch.const)
+        n.bycatch[j,i+1] <- bev.holt(migration(n.bycatch[,i], grids.bycatch, j, n.box), r.bycatch, K.bycatch) - bycatch.from.eff(eff.dist[j], n.bycatch[j,i], bycatch.const)
+        n.habitat[j,i+1] <- bev.holt.hab.eff(migration(n.habitat[,i], grids.habitat, j, n.box), r.habitat, K.habitat, allocation[j], habitat.const, eff.dist[j], n.box)
+        n.fished[j,i+1] <- ifelse(n.fished[j,i+1] <= 0 || is.na(n.fished[j,i+1]), 0, n.fished[j,i+1]) # Adjusting all negative population sizes to 0
         n.bycatch[j,i+1] <- ifelse(n.bycatch[j,i+1] <= 0 || is.na(n.bycatch[j,i+1]), 0, n.bycatch[j,i+1])
         n.habitat[j,i+1] <- ifelse(n.habitat[j,i+1] <= 0 || is.na(n.habitat[j,i+1]), 0, n.habitat[j,i+1])
       }

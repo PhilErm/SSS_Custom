@@ -12,13 +12,90 @@ bev.holt <- function(n, r, K){
   (r * K * n) / (K + (r - 1) * n)
 }
 
-# Beverton-Holt growth function that can account for habitat damage
-bev.holt.hab <- function(n, r, K, allocation, habitat.const, catch, n.box, n.box.spared){
+# Beverton-Holt growth function that can account for habitat damage depending on fishing effort
+bev.holt.hab.eff <- function(n, r, K, allocation, habitat.const, effort, n.box){
   if(allocation == "reserve"){
     (r * K * n) / (K + (r - 1) * n) 
   } else {
-    (K / (((catch / (n.box - n.box.spared)) * habitat.const)+1) * r * n) / ((K / (((catch / (n.box - n.box.spared)) * habitat.const)+1)) + (r - 1) * n) # If the grid cell is fished, carrying capacity is lowered
+    Kstar <- K * 1/((effort * habitat.const)+1)
+    (r * Kstar * n) / (Kstar + (r - 1) * n)
   }
+}
+
+# Effort allocator
+eff.allo <- function(bioms, method, harv, n.box, n.box.spared){
+  if(method==1){
+    best.CPUE.finder(bioms)
+  }
+}
+
+# Harvest based on effort function
+harv.from.eff <- function(effort, species, catch.const){
+  harvest <- effort*species*catch.const
+  harvest
+}
+
+# Function for determening the spatial distribution of effort across the seascape
+whole.eff <- function(method, species, allocation, catch, catch.const, n.box){
+  if(method==1){ # Distributing effort to maintain best CPUE
+    pre.fishing.pop <- species[which(allocation == "no reserve")]
+    post.fishing.pop <- best.CPUE.finder(pre.fishing.pop, catch)
+    eff.fishable.pop <- eff.calc(pre.fishing.pop, post.fishing.pop, catch.const)
+    eff.whole.pop <- rep(0, n.box)
+    eff.whole.pop[which(allocation == "no reserve")] <- eff.fishable.pop
+    eff.whole.pop
+  }
+}
+
+# Function for catching fish at the most efficient CPUE
+best.CPUE.finder <- function(bioms, harv){
+  loop.ind <- 1
+  while(0 < harv){ # So long as there is harvest left to be taken
+    if(length(bioms)>1) {
+      high <- max(bioms)
+      sec.high <- sort(bioms,partial=length(bioms)-loop.ind)[length(bioms)-loop.ind]
+    } else if(length(bioms)==1) {
+      bioms <- bioms-harv
+      harv <- harv-harv
+      break
+    } else if(length(bioms)==0) {
+      bioms <- bioms
+      harv <- harv
+      break
+    }
+    sec.high <- sort(bioms,partial=length(bioms)-loop.ind)[length(bioms)-loop.ind]
+    harv.diff <- high-sec.high
+    if(harv.diff*loop.ind <= harv){
+      index <- which(bioms==high)
+      bioms[index] <- bioms[index]-harv.diff
+      harv <- harv-(harv.diff*loop.ind)
+      bioms
+      harv 
+      if(var(bioms) != 0){ # Alternative routine for if boxes have same biomass over time
+        loop.ind <- loop.ind+1
+      } else {
+        bioms <- bioms-(harv/length(bioms))
+        harv <- harv-harv
+        bioms
+        harv} # One possible ending
+    } else { # Do this if there is not much harvest left
+      last.catch <- harv/loop.ind
+      index <- which(bioms==high)
+      bioms[index] <- bioms[index]-last.catch
+      harv <- harv-last.catch*loop.ind
+      bioms
+      harv # Another possible ending
+    }
+  }
+  harv
+  bioms
+}
+
+# Function for calculating effort based on catch and biomass
+eff.calc <- function(pre.catch, post.catch, catch.const){
+  catch <- pre.catch-post.catch
+  effort <- catch/(catch.const*pre.catch)
+  effort
 }
 
 # Proportional harvest for a particular box function
@@ -51,6 +128,12 @@ bycatch <- function(species, catch, n.box, n.box.spared, allocation, bycatch.con
   } else {
     bycatch.const * (catch / (n.box - n.box.spared)) * species # If a box is not allocated as a reserve, then a proportional share of the total catch is taken from it, which causes a proportional amount of bycatch based on the size of the bycatch population
   }
+}
+
+# Bycatch based on effort function
+bycatch.from.eff <- function(effort, species, bycatch.const){
+  bycatch <- effort*species*bycatch.const
+  bycatch
 }
 
 # Distance from one grid cell to all other grid cells function

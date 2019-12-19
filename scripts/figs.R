@@ -8,7 +8,7 @@ source("scripts/figFunctions.R")
 # Figure: abundance for one sparing arrangement and one catch level ####
 
 # Parameters
-plot.catch <- 1000 # Level of catch to be plotted. See object `catch.spect` for all modelled catch levels
+plot.catch <- 500 # Level of catch to be plotted. See object `catch.spect` for all modelled catch levels
 n.box.spared <- n.box/2 # Level of sparing to be plotted. See object `n.box` for highest possible sparing level
 
 # Fished species figure
@@ -84,6 +84,7 @@ print(fig)
 # origin.box <- 3
 # disp.friction <- 0.3
 # disp.factor <- 0.5
+# n.box <- 100
 # rast.dims <- sqrt(n.box) # Determining grid dimensions
 # disp.grid <- raster(ncol=rast.dims, nrow=rast.dims, xmn=-rast.dims, xmx=rast.dims, ymn=-rast.dims, ymx=rast.dims) # Building a raster of chosen dimensions
 # disp.grid[] <- 1:ncell(disp.grid) # Numbering raster grid cells left to right, top to bottom

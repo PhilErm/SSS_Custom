@@ -13,6 +13,7 @@ fished.disp.friction <- 0.3 # The lower the number, the farther individuals will
 # Misc.
 fished.name <- "fished species" # Name of species
 init.fished <- 250 # Initial size of population (per box)
+catch.const <- 2 # Catch constant for calculating harvest under Schaefer model
 
 # Bycatch species ####
 
@@ -27,7 +28,7 @@ bycatch.disp.friction <- 0.3 # The lower the number, the more individuals will b
 # Misc.
 bycatch.name <- "bycatch species" # Name of species
 init.bycatch <- 250 # Initial size of population (per box)
-bycatch.const <- 0.001 # Equivalent of catchability constant in Schaefer model. Effort*bycatch.const*bycatch.pop is how much bycatch will occur in a cell. A higher value will result in more bycatch
+bycatch.const <- 1 # Constant in Schaefer model. Effort*bycatch.const*bycatch.pop is how much bycatch will occur in a cell. A higher value will result in more bycatch
 
 # Habitat sensitive species ####
 
@@ -42,12 +43,12 @@ habitat.disp.friction <- 0.3 # The lower the number, the more individuals will b
 # Misc.
 habitat.name <- "habitat species"
 init.habitat <- 250 # Initial size of population (per box)
-habitat.const <- 0.01 # A higher value will result in more habitat damage occurring
+habitat.const <- 10 # Should be one or more. A higher value will result in more damage to K
 
 # Catch ####
 
 # Absolute catch
-catch <- 1000 # Absolute catch required across entire seascape per timestep if not exploring catch spectrum
+#catch <- 1000 # Absolute catch required across entire seascape per timestep if not exploring catch spectrum
 
 # Catch spectrum
 catch.min <- 250 # Minimum catch value on catch spectrum
@@ -59,3 +60,4 @@ catch.int <- 250 # Interval size of catch spectrum
 n.time <- 20 # Length of time to calculate
 n.box <- 36 # Number of boxes. Must be a perfect square to facilitate the construction of a symmetrical grid
 disp.on <- TRUE # Value must be TRUE for dispersal to be occur
+catch.method <- 1 # catch.method = 1 for effort distributed to maintain best CPUE
