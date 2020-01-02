@@ -5,6 +5,13 @@
 
 source("scripts/figFunctions.R")
 
+# Results: simulations in which negative populations occurred
+
+negative.sims.proc <- negative.sims %>% 
+  select(-time) %>% 
+  distinct() %>% 
+  print()
+
 # Figure: abundance for one sparing arrangement and one catch level ####
 
 # Parameters
@@ -39,6 +46,11 @@ colnames(results) <- c("catch", "spared boxes", "fished", "bycatch", "habitat") 
 results <- gather(results, key = "species", value = "n", c("fished", "bycatch", "habitat")) # Converting from wide format to tidy format
 plot.results <- results %>% # Creating column denoting proportion of seascape spared
   mutate("prop.spared" = `spared boxes`/n.box)
+
+# Removing simulations in which populations went negative or the seascape was fully spared
+plot.results <- transform(plot.results, catch = as.numeric(catch))
+plot.results <- anti_join(plot.results, negative.sims.proc, by = c("catch" = "catch", "spared.boxes" = "spared boxes")) %>% 
+  filter(prop.spared < 1)
 
 # Creating new factor level column so that facet wraps correctly
 plot.results$catch_f <- factor(plot.results$catch, levels=catch.spect)

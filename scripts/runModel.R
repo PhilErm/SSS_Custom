@@ -19,6 +19,11 @@ grids.fished <- grid.maker(n.box, disp.on, fished.disp.factor, fished.disp.frict
 grids.bycatch <- grid.maker(n.box, disp.on, bycatch.disp.factor, bycatch.disp.friction, bycatch.name)
 grids.habitat <- grid.maker(n.box, disp.on, habitat.disp.factor, habitat.disp.friction, habitat.name)
 
+# Creating data frame for storing which simulations have populations that go negative
+neg.sims.names <- c("catch", "spared boxes", "time")
+negative.sims <- data.frame(matrix(ncol = length(neg.sims.names), nrow = 0))
+colnames(negative.sims) <- neg.sims.names
+
 # Creating spectrum of catch values to explore
 catch.spect <- seq(from=catch.min, to=catch.max, by=catch.int)
 
@@ -69,6 +74,11 @@ for(p in catch.spect){ # For all levels of catch
         n.fished[j,i+1] <- bev.holt(migration(n.fished[,i], grids.fished, j, n.box), r.fished, K.fished) - harv.from.eff(eff.dist[j], n.fished[j,i], catch.const)
         n.bycatch[j,i+1] <- bev.holt(migration(n.bycatch[,i], grids.bycatch, j, n.box), r.bycatch, K.bycatch) - bycatch.from.eff(eff.dist[j], n.bycatch[j,i], bycatch.const)
         n.habitat[j,i+1] <- bev.holt.hab.eff(migration(n.habitat[,i], grids.habitat, j, n.box), r.habitat, K.habitat, allocation[j], habitat.const, eff.dist[j], n.box)
+        if(n.fished[j,i+1] < 0 || n.bycatch[j,i+1] < 0 || n.habitat[j,i+1] < 0 || is.na(n.fished[j,i+1]) || is.na(n.bycatch[j,i+1]) || is.na(n.habitat[j,i+1])){ # Saves details of any simulation which has ever possessed a negative population size
+          new.row <- cbind(p, z, i+1)
+          colnames(new.row) <- neg.sims.names
+          negative.sims <- rbind(negative.sims, new.row)
+        }
         n.fished[j,i+1] <- ifelse(n.fished[j,i+1] <= 0 || is.na(n.fished[j,i+1]), 0, n.fished[j,i+1]) # Adjusting all negative population sizes to 0
         n.bycatch[j,i+1] <- ifelse(n.bycatch[j,i+1] <= 0 || is.na(n.bycatch[j,i+1]), 0, n.bycatch[j,i+1])
         n.habitat[j,i+1] <- ifelse(n.habitat[j,i+1] <= 0 || is.na(n.habitat[j,i+1]), 0, n.habitat[j,i+1])

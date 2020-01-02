@@ -9,7 +9,6 @@ A model for exploring sea sparing and sharing in a spatially explicit setting fo
 
 ## To-dos
 
-* Account for negative population sizes.
-* Rebuild dispersal functionality to accomodate dispersal kernels.
+* Rebuild dispersal functionality to accomodate dispersal kernels
 * Comment new functions
 * Implement other fishing methods
