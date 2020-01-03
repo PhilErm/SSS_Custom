@@ -38,7 +38,6 @@ catch.bycatch.list <- vector(length = length(catch.spect), mode = 'list')
 catch.habitat.list <- vector(length = length(catch.spect), mode = 'list')
 
 # Running the model from lowest catch value (i.e. p = 0) to highest catch value
-
 for(p in catch.spect){ # For all levels of catch
   # Creating empty lists for storing abundance results
   n.fished.list <- vector(length = n.box, mode = 'list')
@@ -102,7 +101,7 @@ for(p in catch.spect){ # For all levels of catch
 }
 
 # Figures
-#source("scripts/figs.R")
+source("scripts/figs.R")
 
 # Beep for end of processing
 beep()

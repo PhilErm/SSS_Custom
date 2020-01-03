@@ -9,6 +9,5 @@ A model for exploring sea sparing and sharing in a spatially explicit setting fo
 
 ## To-dos
 
-* Rebuild dispersal functionality to accomodate dispersal kernels
 * Comment new functions
-* Implement other fishing methods
+* Implement other fishing methods (even effort, even catch)

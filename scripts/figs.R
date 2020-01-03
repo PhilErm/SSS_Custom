@@ -7,18 +7,14 @@ source("scripts/figFunctions.R")
 
 # Results: simulations in which negative populations occurred
 
-negative.sims.proc <- negative.sims %>% 
-  select(-time) %>% 
-  distinct() %>% 
-  print()
+negative.sims.proc <- negative.sims %>%
+  select(-time) %>%
+  distinct() #%>%
+  #print()
 
 # Figure: dispersal grids for fished species (change species as appropriate)
 
-# Parameters
-n.box.spared <- n.box/2 # Level of sparing to be plotted. See object `n.box` for highest possible sparing level
-allocation <- allocate(n.box, n.box.spared)
-
-# Figure
+# par(mfcol=c(1, 1))
 par(mfcol=c(sqrt(n.box), sqrt(n.box)))
 for(i in 1:length(grids.fished)){
   persp(
@@ -33,14 +29,15 @@ for(i in 1:length(grids.fished)){
     zlab = "\n\nDispersal probability",
     ylab = " ",
     xlab = " ",
-    ticktype = "detailed")
+    ticktype = "detailed",
+    main = paste('Box', i))
 }
 
 # Figure: abundance for one sparing arrangement and one catch level ####
 
 # Parameters
 plot.catch <- 500 # Level of catch to be plotted. See object `catch.spect` for all modelled catch levels
-n.box.spared <- n.box/2 # Level of sparing to be plotted. See object `n.box` for highest possible sparing level
+n.box.spared <- 12 # Level of sparing to be plotted. See object `n.box` for highest possible sparing level
 
 # Fished species figure
 abun.plot(catch.fished.list, K.fished, n.box.spared, fished.name, plot.catch)

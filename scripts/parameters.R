@@ -55,7 +55,7 @@ habitat.const <- 10 # Should be one or more. A higher value will result in more 
 
 # Catch spectrum
 catch.min <- 250 # Minimum catch value on catch spectrum
-catch.max <- 2000 # Maximum catch value on catch spectrum
+catch.max <- 1000 # Maximum catch value on catch spectrum
 catch.int <- 250 # Interval size of catch spectrum
 
 # Simulation ####
