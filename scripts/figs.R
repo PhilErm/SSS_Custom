@@ -12,6 +12,30 @@ negative.sims.proc <- negative.sims %>%
   distinct() %>% 
   print()
 
+# Figure: dispersal grids for fished species (change species as appropriate)
+
+# Parameters
+n.box.spared <- n.box/2 # Level of sparing to be plotted. See object `n.box` for highest possible sparing level
+allocation <- allocate(n.box, n.box.spared)
+
+# Figure
+par(mfcol=c(sqrt(n.box), sqrt(n.box)))
+for(i in 1:length(grids.fished)){
+  persp(
+    x=1:nrow(grids.fished[[i]]),
+    y=1:ncol(grids.fished[[i]]),
+    z=grids.fished[[i]], 
+    col="red", 
+    theta = 90,
+    zlim = c(0,0.5),
+    shade = 0.4,
+    phi = "30",
+    zlab = "\n\nDispersal probability",
+    ylab = " ",
+    xlab = " ",
+    ticktype = "detailed")
+}
+
 # Figure: abundance for one sparing arrangement and one catch level ####
 
 # Parameters
@@ -88,39 +112,3 @@ fig <- ggplot(data = catch.spectrum.results) +
   labs(x = "Catch target", y = "Optimal proportion of seascape spared") +
   theme_bw()
 print(fig)
-
-# Illustrative figures ####
-
-# # Grid construction process figures
-# par(mfcol=c(1, 1))
-# origin.box <- 3
-# disp.friction <- 0.3
-# disp.factor <- 0.5
-# n.box <- 100
-# rast.dims <- sqrt(n.box) # Determining grid dimensions
-# disp.grid <- raster(ncol=rast.dims, nrow=rast.dims, xmn=-rast.dims, xmx=rast.dims, ymn=-rast.dims, ymx=rast.dims) # Building a raster of chosen dimensions
-# disp.grid[] <- 1:ncell(disp.grid) # Numbering raster grid cells left to right, top to bottom
-# plot(disp.grid)
-# text(disp.grid, digits = 3)
-# crs(disp.grid) <- "+proj=utm +zone=15 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" # Changing CRS. Hacky, but will eventually produce correct distances
-# disp.dists <- gridDistance(disp.grid, origin=origin.box)/2 # Calculating distance from origin box to other boxes. Dividing by 2 to account for CRS
-# disp.dists <- t(disp.dists) # Transposing so that loops will loop dispersal over boxes in the same way as the model itself loops through boxes
-# plot(disp.dists)
-# text(disp.dists, digits = 3)
-# prob.grid <- 1/disp.dists # Inverting distances so smaller numbers are farther away
-# plot(prob.grid)
-# text(prob.grid, digits = 3)
-# prob.grid <- prob.grid-disp.friction # Making some numbers negative to limit the maximum dispersal distance
-# plot(prob.grid)
-# text(prob.grid, digits = 3)
-# prob.grid[prob.grid < 0] <- 0 # Converts any "probabilities" less than 0 to 0
-# plot(prob.grid)
-# text(prob.grid, digits = 3)
-# prob.grid[prob.grid == Inf] <- NA # Converts single cell with Inf in it to NA
-# prob.grid[is.na(prob.grid)] <- cellStats(prob.grid, stat='sum')*disp.factor # Converts NA cell to an actual value
-# plot(prob.grid)
-# text(prob.grid, digits = 3)
-# comb <- cellStats(prob.grid, stat='sum') # Part of rescaling to ensure the sum of all cell probabilities adds up to 1
-# prob.grid <- prob.grid/comb # Ensuring all probabilities add to 1
-# plot(prob.grid)
-# text(prob.grid, digits = 3)

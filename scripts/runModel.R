@@ -15,9 +15,14 @@ source("scripts/modelFunctions.R")
 # Creating objects necessary for model to run
 
 # Creating grids to define dispersal probabilities
-grids.fished <- grid.maker(n.box, disp.on, fished.disp.factor, fished.disp.friction, fished.name) # Creating 1 dispersal probability grid for each cell
-grids.bycatch <- grid.maker(n.box, disp.on, bycatch.disp.factor, bycatch.disp.friction, bycatch.name)
-grids.habitat <- grid.maker(n.box, disp.on, habitat.disp.factor, habitat.disp.friction, habitat.name)
+grids.fished <- grid.builder(n.box, disp.on, fished.disp.dim, fished.dist.sigma)
+grids.bycatch <- grid.builder(n.box, disp.on, bycatch.disp.dim, bycatch.dist.sigma)
+grids.habitat <- grid.builder(n.box, disp.on, habitat.disp.dim, habitat.dist.sigma)
+
+# Altering dispersal grids depending on type of boundary selected
+grids.fished <- lapply(grids.fished, FUN = boundary, disp.type = fished.disp.type)
+grids.bycatch <- lapply(grids.bycatch, FUN = boundary, disp.type = bycatch.disp.type)
+grids.habitat <- lapply(grids.habitat, FUN = boundary, disp.type = habitat.disp.type)
 
 # Creating data frame for storing which simulations have populations that go negative
 neg.sims.names <- c("catch", "spared boxes", "time")
@@ -74,7 +79,7 @@ for(p in catch.spect){ # For all levels of catch
         n.fished[j,i+1] <- bev.holt(migration(n.fished[,i], grids.fished, j, n.box), r.fished, K.fished) - harv.from.eff(eff.dist[j], n.fished[j,i], catch.const)
         n.bycatch[j,i+1] <- bev.holt(migration(n.bycatch[,i], grids.bycatch, j, n.box), r.bycatch, K.bycatch) - bycatch.from.eff(eff.dist[j], n.bycatch[j,i], bycatch.const)
         n.habitat[j,i+1] <- bev.holt.hab.eff(migration(n.habitat[,i], grids.habitat, j, n.box), r.habitat, K.habitat, allocation[j], habitat.const, eff.dist[j], n.box)
-        if(n.fished[j,i+1] < 0 || n.bycatch[j,i+1] < 0 || n.habitat[j,i+1] < 0 || is.na(n.fished[j,i+1]) || is.na(n.bycatch[j,i+1]) || is.na(n.habitat[j,i+1])){ # Saves details of any simulation which has ever possessed a negative population size
+        if(n.fished[j,i+1] < 0 || n.bycatch[j,i+1] < 0 || n.habitat[j,i+1] < 0 || is.na(n.fished[j,i+1]) || is.na(n.bycatch[j,i+1]) || is.na(n.habitat[j,i+1])){ # Saves details of any simulation which goes into a negative population size
           new.row <- cbind(p, z, i+1)
           colnames(new.row) <- neg.sims.names
           negative.sims <- rbind(negative.sims, new.row)

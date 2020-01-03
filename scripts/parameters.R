@@ -7,8 +7,9 @@ r.fished <- 2 # Intrinsic growth rate
 K.fished <- 500 # Carrying capacity (per box)
 
 # Dispersal
-fished.disp.factor <- 0.5 # The lower the number, the less individuals will tend to remain in their starting cell. Keep between 0 & 1
-fished.disp.friction <- 0.3 # The lower the number, the farther individuals will be spread. Keep between 0 & 1
+fished.disp.dim <- 3 # Must be odd number so that dispersal probability centers on occupied cell properly
+fished.dist.sigma <- 1.5
+fished.disp.type <- 2 # "1" = Individuals attempt to disperse out of boundaries and are lost. "2" = Individuals do not attempt to disperse out of boundaries
 
 # Misc.
 fished.name <- "fished species" # Name of species
@@ -22,8 +23,9 @@ r.bycatch <- 2 # Intrinsic growth rate
 K.bycatch <- 500 # Carrying capacity (per box)
 
 # Dispersal
-bycatch.disp.factor <- 0.5 # The lower the number, the less individuals will tend to remain in their starting cell. Keep between 0 & 1
-bycatch.disp.friction <- 0.3 # The lower the number, the more individuals will be spread across seascape. Keep between 0 & 1
+bycatch.disp.dim <- 3 # Must be odd number so that dispersal probability centers on occupied cell properly
+bycatch.dist.sigma <- 1.5
+bycatch.disp.type <- 2
 
 # Misc.
 bycatch.name <- "bycatch species" # Name of species
@@ -37,8 +39,9 @@ r.habitat <- 2 # Intrinsic growth rate
 K.habitat <- 500 # Carrying capacity (per box)
 
 # Dispersal
-habitat.disp.factor <- 0.5 # The lower the number, the less individuals will tend to remain in their starting cell. Keep between 0 & 1
-habitat.disp.friction <- 0.3 # The lower the number, the more individuals will be spread across seascape. Keep between 0 & 1
+habitat.disp.dim <- 3 # Must be odd number so that dispersal probability centers on occupied cell properly
+habitat.dist.sigma <- 1.5
+habitat.disp.type <- 2
 
 # Misc.
 habitat.name <- "habitat species"

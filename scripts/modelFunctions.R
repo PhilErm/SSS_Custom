@@ -3,7 +3,8 @@
 
 # Required packages ####
 
-library(gdistance)
+#library(gdistance)
+library(spatialEco)
 
 # Functions ####
 
@@ -47,7 +48,7 @@ whole.eff <- function(method, species, allocation, catch, catch.const, n.box){
   }
 }
 
-# Function for catching fish at the most efficient CPUE
+# Function for catching fish at the most efficient CPUE. One of the greatest functions ever built
 best.CPUE.finder <- function(bioms, harv){
   loop.ind <- 1
   while(0 < harv){ # So long as there is harvest left to be taken
@@ -136,48 +137,6 @@ bycatch.from.eff <- function(effort, species, bycatch.const){
   bycatch
 }
 
-# Distance from one grid cell to all other grid cells function
-dist.finder <- function(n.box, origin.box){
-  rast.dims <- sqrt(n.box) # Determining grid dimensions
-  disp.grid <- raster(ncol=rast.dims, nrow=rast.dims, xmn=-rast.dims, xmx=rast.dims, ymn=-rast.dims, ymx=rast.dims) # Building a raster of chosen dimensions
-  disp.grid[] <- 1:ncell(disp.grid) # Numbering raster grid cells left to right, top to bottom
-  crs(disp.grid) <- "+proj=utm +zone=15 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" # Changing CRS. Hacky, but will eventually produce correct distances
-  disp.dists <- gridDistance(disp.grid, origin=origin.box)/2 # Calculating distance from origin box to other boxes. Dividing by 2 to account for CRS
-  disp.dists <- t(disp.dists) # Transposing so that loops will loop dispersal over boxes in the same way as the model itself loops through boxes
-}
-
-# Function that creates matrix of probabilities of dispersing from one grid cell to another. Hacky and just for testing maths that depends on dispersal grid, will need to be replaced
-prob.finder <- function(dist.grid, disp.on, disp.factor, disp.friction){ # Some redundant arguments
-  if(disp.on == TRUE){ # For turning dispersal on
-    prob.grid <- 1/dist.grid # Inverting distances so smaller numbers are farther away
-    prob.grid <- prob.grid-disp.friction # Making some numbers negative to limit the maximum dispersal distance
-    prob.grid[prob.grid < 0] <- 0 # Converts any "probabilities" less than 0 to 0
-    prob.grid[prob.grid == Inf] <- NA # Converts single cell with Inf in it to NA
-    prob.grid[is.na(prob.grid)] <- cellStats(prob.grid, stat='sum')*disp.factor # Converts NA cell to an actual value
-    comb <- cellStats(prob.grid, stat='sum') # Part of rescaling to ensure the sum of all cell probabilities adds up to 1
-    prob.grid <- prob.grid/comb # Ensuring all probabilities add to 1
-    prob.grid <- as.matrix(prob.grid) # Converting the raster into a matrix for use 
-  } else { # If dispersal is not on, then all individuals will be retained in the grid in which they were born
-    prob.grid <- 1-(dist.grid) # Begins conversion of distance grid into dispersal probability grid. Hacky -- numbers are arbitrary
-    prob.grid[prob.grid < 1] <- 0 # Converts any "probabilities" less than 1 to 0
-    prob.grid <- as.matrix(prob.grid) # Converting the raster into a matrix for use 
-  }
-}
-
-# Making a dispersal probability matrix for each cell function
-grid.maker <- function(n.box, disp.on, disp.factor, disp.friction, species.name){
-  grid.list <- vector(length = n.box, mode = 'list') # Creates an empty list to store matrices
-  pb <- txtProgressBar(min = 1, max = n.box, style = 3)
-  for(i in 1:n.box){ 
-    cat(" Generating dispersal grid", i, "of", n.box, "for", species.name)
-    setTxtProgressBar(pb, i)
-    disp.mat <- dist.finder(n.box, i) # Finds distances between all boxes
-    grid.list[[i]] <- prob.finder(disp.mat, disp.on, disp.factor, disp.friction) # Converts distances to probabilities and saves into a list
-  }
-  close(pb)
-  grid.list
-}
-
 # Summation of all movement between cells function
 migration <- function(species, grids, box.of.int, n.box){
   result <- vector(mode = "integer", length = n.box) # Create a vector for saving the number of migrants coming from each box to some box of interest
@@ -185,6 +144,58 @@ migration <- function(species, grids, box.of.int, n.box){
     result[l] <- species[l]*grids[[l]][box.of.int] # Look at the population size of a box, multiply it by the proportion of individuals that ought to move from there to the box of interest
   }
   sum(result) # Sum all the total number of individuals moving into the box of interest and being retained in the box
+}
+
+grid.red <- function(grid, n.box){ # Used in grid.builder function. Reduces large grid into smaller grid
+  ocean.dims <- sqrt(n.box)
+  grid <- grid[-1:-ocean.dims,-1:-ocean.dims]
+  grid <- grid[-(nrow(grid)-ocean.dims+1):-nrow(grid),-(ncol(grid)-ocean.dims+1):-ncol(grid)]
+  grid[is.na(grid)] <- 0
+  grid <- t(grid)  # List needs to loop down columns so transposing.
+  grid
+}
+
+grid.builder <- function(n.box, disp.on, disp.dim, dist.sigma){
+  ocean.dim <- sqrt(n.box)
+  grid.list <- list()
+  large.grid <- matrix(NA, nrow=ocean.dim+(2*ocean.dim), ncol=ocean.dim+(2*ocean.dim))
+  if(disp.on == TRUE){ # For turning dispersal on
+    disp.grid <- gaussian.kernel(sigma=dist.sigma, n=disp.dim)
+    for(row.offset in 1:ocean.dim){
+      for(col.offset in 1:ocean.dim){
+        curr.grid <- large.grid
+        for(row in 1:disp.dim){
+          for(col in 1:disp.dim){
+            curr.grid[row+ocean.dim-(floor(disp.dim/2))-1+row.offset,col+ocean.dim-(floor(disp.dim/2))-1+col.offset] <- disp.grid[row,col]
+          }
+        }
+        grid.list[[length(grid.list)+1]] <- curr.grid
+      }
+    }
+    grid.list
+    fin.list <- lapply(grid.list, FUN = grid.red, n.box = n.box) # And that's it!
+    fin.list
+  } else { # If dispersal is not on, then all individuals will be retained in the grid in which they were born
+    for(row in 1:ocean.dim){
+      for(col in 1:ocean.dim){
+        curr.grid <- matrix(nrow = ocean.dim, ncol = ocean.dim)
+        curr.grid[row,col] <- 1
+        curr.grid[is.na(curr.grid)] <- 0
+        grid.list[[length(grid.list)+1]] <- curr.grid
+      }
+    }
+    fin.list <- lapply(grid.list, FUN = t) # Transposing list so will be read properly by migration function
+    fin.list
+  }
+}
+
+# Boundary type alterer
+boundary <- function(grid, disp.type){
+  if(disp.type == 1){ # Individuals attempt to disperse out of boundaries and are lost
+  grid
+  } else if(disp.type == 2) { # Individuals do not attempt to disperse out of boundaries
+  grid <- grid/sum(grid)
+  }
 }
 
 # Allocating cells to spared or shared function
