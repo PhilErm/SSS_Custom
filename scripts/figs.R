@@ -33,6 +33,28 @@ for(i in 1:length(grids.fished)){
     main = paste('Box', i))
 }
 
+# Individual figure with plotly
+library(plotly)
+disp.prob <- grids.fished[[14]]
+p <- plot_ly(z = ~disp.prob) %>% add_surface(
+  contours = list(
+    z = list(
+      show=TRUE,
+      usecolormap=TRUE,
+      highlightcolor="#ff0000",
+      project=list(z=TRUE)
+    )
+  )
+) %>%
+  layout(
+    scene = list(
+      camera=list(
+        eye = list(x=1.87, y=0.88, z=-0.64)
+      )
+    )
+  )
+p
+
 # Figure: abundance for one sparing arrangement and one catch level ####
 
 # Parameters

@@ -101,7 +101,7 @@ for(p in catch.spect){ # For all levels of catch
 }
 
 # Figures
-source("scripts/figs.R")
+#source("scripts/figs.R")
 
 # Beep for end of processing
 beep()
