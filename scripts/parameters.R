@@ -50,9 +50,6 @@ habitat.const <- 10 # Should be one or more. A higher value will result in more 
 
 # Catch ####
 
-# Absolute catch
-#catch <- 1000 # Absolute catch required across entire seascape per timestep if not exploring catch spectrum
-
 # Catch spectrum
 catch.min <- 250 # Minimum catch value on catch spectrum
 catch.max <- 1000 # Maximum catch value on catch spectrum
@@ -63,4 +60,4 @@ catch.int <- 250 # Interval size of catch spectrum
 n.time <- 20 # Length of time to calculate
 n.box <- 36 # Number of boxes. Must be a perfect square to facilitate the construction of a symmetrical grid
 disp.on <- TRUE # Value must be TRUE for dispersal to be occur
-catch.method <- 1 # catch.method = 1 for effort distributed to maintain best CPUE
+catch.method <- 1 # catch.method = 1 for effort distributed to maintain best CPUE. catch.method = 2 for same amount of catch taken from each box. catch.method = 3 for same effort applied to each box

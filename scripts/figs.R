@@ -14,7 +14,7 @@ negative.sims.proc <- negative.sims %>%
 
 # Figure: dispersal grids for fished species (change species as appropriate)
 
-# par(mfcol=c(1, 1))
+# For all grid cells
 par(mfcol=c(sqrt(n.box), sqrt(n.box)))
 for(i in 1:length(grids.fished)){
   persp(
@@ -33,9 +33,26 @@ for(i in 1:length(grids.fished)){
     main = paste('Box', i))
 }
 
-# Individual figure with plotly
+# For 1 cell
+par(mfcol=c(1, 1))
+disp.prob <- grids.fished[[1]]
+persp(
+  x=1:nrow(disp.prob),
+  y=1:ncol(disp.prob),
+  z=disp.prob, 
+  col="red", 
+  theta = 90,
+  zlim = c(0,0.5),
+  shade = 0.4,
+  phi = "30",
+  zlab = "\n\nDispersal probability",
+  ylab = " ",
+  xlab = " ",
+  ticktype = "detailed",
+  main = "Dispersal across seascape")
+
+# For 1 cell (plotly)
 library(plotly)
-disp.prob <- grids.fished[[14]]
 p <- plot_ly(z = ~disp.prob) %>% add_surface(
   contours = list(
     z = list(

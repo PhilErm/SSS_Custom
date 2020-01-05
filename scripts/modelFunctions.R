@@ -23,24 +23,34 @@ bev.holt.hab.eff <- function(n, r, K, allocation, habitat.const, effort, n.box){
   }
 }
 
-# Effort allocator
-eff.allo <- function(bioms, method, harv, n.box, n.box.spared){
-  if(method==1){
-    best.CPUE.finder(bioms)
-  }
-}
-
 # Harvest based on effort function
 harv.from.eff <- function(effort, species, catch.const){
   harvest <- effort*species*catch.const
   harvest
 }
 
-# Function for determening the spatial distribution of effort across the seascape
+# Function for determining the spatial distribution of effort across the seascape
 whole.eff <- function(method, species, allocation, catch, catch.const, n.box){
   if(method==1){ # Distributing effort to maintain best CPUE
     pre.fishing.pop <- species[which(allocation == "no reserve")]
     post.fishing.pop <- best.CPUE.finder(pre.fishing.pop, catch)
+    eff.fishable.pop <- eff.calc(pre.fishing.pop, post.fishing.pop, catch.const)
+    eff.whole.pop <- rep(0, n.box)
+    eff.whole.pop[which(allocation == "no reserve")] <- eff.fishable.pop
+    eff.whole.pop
+  } else if(method==2){ # Distributing effort so that the same catch is taken from each box
+    n.box.spared <- length(which(allocation=="no reserve"))
+    catch.per.box <- catch/n.box.spared
+    pre.fishing.pop <- species[which(allocation == "no reserve")]
+    post.fishing.pop <- pre.fishing.pop-catch.per.box
+    eff.fishable.pop <- eff.calc(pre.fishing.pop, post.fishing.pop, catch.const)
+    eff.whole.pop <- rep(0, n.box)
+    eff.whole.pop[which(allocation == "no reserve")] <- eff.fishable.pop
+    eff.whole.pop
+  } else if(method==3){ # Distributing effort evenly across seascape
+    pre.fishing.pop <- species[which(allocation == "no reserve")]
+    even.catch <- catch*(pre.fishing.pop)/(sum(pre.fishing.pop))
+    post.fishing.pop <- pre.fishing.pop-even.catch
     eff.fishable.pop <- eff.calc(pre.fishing.pop, post.fishing.pop, catch.const)
     eff.whole.pop <- rep(0, n.box)
     eff.whole.pop[which(allocation == "no reserve")] <- eff.fishable.pop
