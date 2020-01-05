@@ -156,5 +156,5 @@ fig <- ggplot(data = catch.spectrum.results) +
   geom_line(mapping = aes(x = catch_f, y = prop.spared, group = distinguisher, col = distinguisher)) +
   labs(x = "Catch target", y = "Proportion of seascape spared") +
   theme_bw() +
-  scale_colour_discrete(name = " ", labels = c("Optimal", "Maximum possible under catch level"))
+  scale_colour_discrete(name = " ", labels = c("Optimal", "Maximum possible under catch target"))
 print(fig)
