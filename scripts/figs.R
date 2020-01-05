@@ -5,14 +5,14 @@
 
 source("scripts/figFunctions.R")
 
-# Results: simulations in which negative populations occurred
+# Results: simulations in which negative populations occurred ####
 
 negative.sims.proc <- negative.sims %>%
   select(-time) %>%
   distinct() #%>%
   #print()
 
-# Figure: dispersal grids for fished species (change species as appropriate)
+# Figure: dispersal grids for fished species (change species as appropriate) ####
 
 # For all grid cells
 par(mfcol=c(sqrt(n.box), sqrt(n.box)))
@@ -76,7 +76,7 @@ p
 
 # Parameters
 plot.catch <- 500 # Level of catch to be plotted. See object `catch.spect` for all modelled catch levels
-n.box.spared <- 12 # Level of sparing to be plotted. See object `n.box` for highest possible sparing level
+n.box.spared <- 18 # Level of sparing to be plotted. See object `n.box` for highest possible sparing level
 
 # Fished species figure
 abun.plot(catch.fished.list, K.fished, n.box.spared, fished.name, plot.catch)
@@ -137,14 +137,24 @@ print(fig)
 # NOTE: must have run processing code in "Figure: abundance across catch levels across sparing levels"
 
 # Finding best level of sparing for each level of catch
-catch.spectrum.results <- plot.results %>% spread(species, n) %>% 
+catch.spectrum.results <- plot.results %>% 
+  spread(species, n) %>% 
   mutate(total.abun = bycatch + fished + habitat) %>% 
   group_by(catch_f) %>% 
   filter(total.abun == max(total.abun))
 
+# Finding maximum level of possible spring for each level of catch (because passed a certain point of sparing it is not possible to reach catch goal)
+max.sparing.results <- plot.results %>% 
+  group_by(catch) %>%
+  slice(which.max(spared.boxes))
+
+# Combining results to facilitate plotting
+catch.spectrum.results <- bind_rows(catch.spectrum.results, max.sparing.results, .id = "distinguisher")
+
 # Figure: best level of sparing for each catch target
 fig <- ggplot(data = catch.spectrum.results) +
-  geom_line(mapping = aes(x = catch_f, y = prop.spared, group = 1)) +
-  labs(x = "Catch target", y = "Optimal proportion of seascape spared") +
-  theme_bw()
+  geom_line(mapping = aes(x = catch_f, y = prop.spared, group = distinguisher, col = distinguisher)) +
+  labs(x = "Catch target", y = "Proportion of seascape spared") +
+  theme_bw() +
+  scale_colour_discrete(name = " ", labels = c("Optimal", "Maximum possible under catch level"))
 print(fig)

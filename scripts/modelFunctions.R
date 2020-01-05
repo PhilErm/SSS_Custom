@@ -3,7 +3,6 @@
 
 # Required packages ####
 
-#library(gdistance)
 library(spatialEco)
 
 # Functions ####
@@ -109,37 +108,30 @@ eff.calc <- function(pre.catch, post.catch, catch.const){
   effort
 }
 
-# Proportional harvest for a particular box function
-prop.harv.share <- function(catch, loc.biom, tot.biom, allocation){
-  if(allocation == "reserve"){ # Each box is allocated ("allocation") as a reserve or not. If allocated as a reserve, no catch is taken from it
-    0
-  } else {
-    catch * (loc.biom / tot.biom) # If a box is not allocated as a reserve, then a proportional share of the total catch is taken from it depending on the biomass in the box
-  }
-}
+# No longer in use
+# # Total biomass in unreserved boxes function
+# tot.biom <- function(species, n.box, allocation){
+#   total <- vector(mode = "integer", length = n.box) # Create a vector for saving the total number of fishable animals
+#   for(l in 1:n.box){ # For each box
+#     if(allocation[l] == "reserve"){ # Each box is allocated ("allocation") as a reserve or not. If allocated as a reserve, fishable abundance = 0
+#       total[l] <- 0
+#     } else {
+#       total[l] <- species[l] # If a box is not allocated as a reserve, then the number of animals in it is saved into the vector
+#     }
+#   }
+#   total <- sum(total) # Sum total number of fishable individuals
+#   total
+# }
 
-# Total biomass in unreserved boxes function
-tot.biom <- function(species, n.box, allocation){
-  total <- vector(mode = "integer", length = n.box) # Create a vector for saving the total number of fishable animals
-  for(l in 1:n.box){ # For each box
-    if(allocation[l] == "reserve"){ # Each box is allocated ("allocation") as a reserve or not. If allocated as a reserve, fishable abundance = 0
-      total[l] <- 0
-    } else {
-      total[l] <- species[l] # If a box is not allocated as a reserve, then the number of animals in it is saved into the vector
-    }
-  }
-  total <- sum(total) # Sum total number of fishable individuals
-  total
-}
-
-# Bycatch for a particular box function
-bycatch <- function(species, catch, n.box, n.box.spared, allocation, bycatch.const){
-  if(allocation == "reserve"){ # Each box is allocated ("allocation") as a reserve or not. If allocated as a reserve, no bycatch is taken from it
-    0
-  } else {
-    bycatch.const * (catch / (n.box - n.box.spared)) * species # If a box is not allocated as a reserve, then a proportional share of the total catch is taken from it, which causes a proportional amount of bycatch based on the size of the bycatch population
-  }
-}
+# No longer in use
+# # Bycatch for a particular box function
+# bycatch <- function(species, catch, n.box, n.box.spared, allocation, bycatch.const){
+#   if(allocation == "reserve"){ # Each box is allocated ("allocation") as a reserve or not. If allocated as a reserve, no bycatch is taken from it
+#     0
+#   } else {
+#     bycatch.const * (catch / (n.box - n.box.spared)) * species # If a box is not allocated as a reserve, then a proportional share of the total catch is taken from it, which causes a proportional amount of bycatch based on the size of the bycatch population
+#   }
+# }
 
 # Bycatch based on effort function
 bycatch.from.eff <- function(effort, species, bycatch.const){
@@ -156,15 +148,17 @@ migration <- function(species, grids, box.of.int, n.box){
   sum(result) # Sum all the total number of individuals moving into the box of interest and being retained in the box
 }
 
-grid.red <- function(grid, n.box){ # Used in grid.builder function. Reduces large grid into smaller grid
+# Grid reducer function. Used in grid.builder function
+grid.red <- function(grid, n.box){
   ocean.dims <- sqrt(n.box)
   grid <- grid[-1:-ocean.dims,-1:-ocean.dims]
   grid <- grid[-(nrow(grid)-ocean.dims+1):-nrow(grid),-(ncol(grid)-ocean.dims+1):-ncol(grid)]
   grid[is.na(grid)] <- 0
-  grid <- t(grid)  # List needs to loop down columns so transposing.
+  grid <- t(grid)  # List needs to loop down columns so transposing
   grid
 }
 
+# Dispersal probability grid builder function
 grid.builder <- function(n.box, disp.on, disp.dim, dist.sigma){
   ocean.dim <- sqrt(n.box)
   grid.list <- list()
@@ -199,7 +193,7 @@ grid.builder <- function(n.box, disp.on, disp.dim, dist.sigma){
   }
 }
 
-# Boundary type alterer
+# Boundary type alterer function
 boundary <- function(grid, disp.type){
   if(disp.type == 1){ # Individuals attempt to disperse out of boundaries and are lost
   grid
