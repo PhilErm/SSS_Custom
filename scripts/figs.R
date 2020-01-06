@@ -78,16 +78,16 @@ p
 plot.catch <- 500 # Level of catch to be plotted. See object `catch.spect` for all modelled catch levels
 n.box.spared <- 18 # Level of sparing to be plotted. See object `n.box` for highest possible sparing level
 
-# Fished species figure
+# Fished species
 abun.plot(catch.fished.list, K.fished, n.box.spared, fished.name, plot.catch)
 
-# Bycatch species figure
+# Bycatch species
 abun.plot(catch.bycatch.list, K.bycatch, n.box.spared, bycatch.name, plot.catch)
 
-# Habitat sensitive species figure
+# Habitat sensitive species
 abun.plot(catch.habitat.list, K.habitat, n.box.spared, habitat.name, plot.catch)
 
-# Figure: abundance across catch levels across sparing levels ####
+# Figure: abundance across catch levels and across sparing levels ####
 
 # Processing results
 # Finding final abundances for each catch level
@@ -115,7 +115,7 @@ plot.results <- anti_join(plot.results, negative.sims.proc, by = c("catch" = "ca
 # Creating new factor level column so that facet wraps correctly
 plot.results$catch_f <- factor(plot.results$catch, levels=catch.spect)
 
-# Figure: abundance across catch levels across sparing levels
+# Abundance across catch levels across sparing levels
 fig <- ggplot(data = plot.results) +
   geom_line(mapping = aes(x = prop.spared, y = n, color = species)) +
   facet_wrap(.~catch_f, labeller = label_both) +
@@ -136,14 +136,14 @@ print(fig)
 # Figure: best level of sparing for each level of catch ####
 # NOTE: must have run processing code in "Figure: abundance across catch levels across sparing levels"
 
-# Finding best level of sparing for each level of catch
+# Finding best level of sparing for each level of catch (taking best to be highest combined abundance of all species)
 catch.spectrum.results <- plot.results %>% 
   spread(species, n) %>% 
   mutate(total.abun = bycatch + fished + habitat) %>% 
   group_by(catch_f) %>% 
   filter(total.abun == max(total.abun))
 
-# Finding maximum level of possible spring for each level of catch (because passed a certain point of sparing it is not possible to reach catch goal)
+# Finding maximum level of possible sparing for each level of catch (because past a certain point of sparing it is not possible to reach catch goal)
 max.sparing.results <- plot.results %>% 
   group_by(catch) %>%
   slice(which.max(spared.boxes))

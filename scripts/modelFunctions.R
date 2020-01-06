@@ -17,12 +17,12 @@ bev.holt.hab.eff <- function(n, r, K, allocation, habitat.const, effort, n.box){
   if(allocation == "reserve"){
     (r * K * n) / (K + (r - 1) * n) 
   } else {
-    Kstar <- K * 1/((effort * habitat.const)+1)
+    Kstar <- K/((effort * habitat.const)+1)
     (r * Kstar * n) / (Kstar + (r - 1) * n)
   }
 }
 
-# Harvest based on effort function
+# Harvest based on effort function. After Schaefer model
 harv.from.eff <- function(effort, species, catch.const){
   harvest <- effort*species*catch.const
   harvest
@@ -33,7 +33,7 @@ whole.eff <- function(method, species, allocation, catch, catch.const, n.box){
   if(method==1){ # Distributing effort to maintain best CPUE
     pre.fishing.pop <- species[which(allocation == "no reserve")]
     post.fishing.pop <- best.CPUE.finder(pre.fishing.pop, catch)
-    eff.fishable.pop <- eff.calc(pre.fishing.pop, post.fishing.pop, catch.const)
+    eff.fishable.pop <- eff.calc(pre.fishing.pop, post.fishing.pop, catch.const) # Effort required and distribution of effort to move from pre-fishing pop to post-fishing pop
     eff.whole.pop <- rep(0, n.box)
     eff.whole.pop[which(allocation == "no reserve")] <- eff.fishable.pop
     eff.whole.pop
@@ -57,51 +57,54 @@ whole.eff <- function(method, species, allocation, catch, catch.const, n.box){
   }
 }
 
-# Function for catching fish at the most efficient CPUE. One of the greatest functions ever built
+# Function for catching fish at the most efficient CPUE
+# Under the Schaefer model, it is most efficient to take catch from areas where the population is highest. This function
+# ensures that catch is taken from the boxes with the highest population until all the catch required has been taken.
+# The excess of conditionals is to deal with a number of edge cases.
 best.CPUE.finder <- function(bioms, harv){
   loop.ind <- 1
-  while(0 < harv){ # So long as there is harvest left to be taken
-    if(length(bioms)>1) {
-      high <- max(bioms)
-      sec.high <- sort(bioms,partial=length(bioms)-loop.ind)[length(bioms)-loop.ind]
-    } else if(length(bioms)==1) {
-      bioms <- bioms-harv
-      harv <- harv-harv
-      break
-    } else if(length(bioms)==0) {
+  while(0 < harv){ # Do this so long as there is harvest left to be taken
+    if(length(bioms)>1) { # If there is more than one box to be fished
+      high <- max(bioms) # Look for the box with the highest population size
+      sec.high <- sort(bioms,partial=length(bioms)-loop.ind)[length(bioms)-loop.ind] # Look for the box with the second highest population size
+    } else if(length(bioms)==1) { # If there is just one box to be fished
+      bioms <- bioms-harv # Fish it
+      harv <- harv-harv # Update the amount of catch that needs to be taken (will be 0 since it is all being taken instantly from the one box)
+      break # Stop fishing
+    } else if(length(bioms)==0) { # If there are no boxes to be fished (full sparing)
       bioms <- bioms
       harv <- harv
-      break
+      break # Stop fishing
     }
-    sec.high <- sort(bioms,partial=length(bioms)-loop.ind)[length(bioms)-loop.ind]
-    harv.diff <- high-sec.high
-    if(harv.diff*loop.ind <= harv){
-      index <- which(bioms==high)
-      bioms[index] <- bioms[index]-harv.diff
-      harv <- harv-(harv.diff*loop.ind)
+    sec.high <- sort(bioms,partial=length(bioms)-loop.ind)[length(bioms)-loop.ind] # Likely redundant repeat of earlier line. May remove after testing
+    harv.diff <- high-sec.high # Find the difference in population size between the largest and second largest box
+    if(harv.diff*loop.ind <= harv){ # If there is more harvest left than the amount about to be taken from the largest box
+      index <- which(bioms==high) # Find the index of the largest box
+      bioms[index] <- bioms[index]-harv.diff # Harvest it
+      harv <- harv-(harv.diff*loop.ind) # Update the total harvest that remains to be taken
       bioms
       harv 
-      if(var(bioms) != 0){ # Alternative routine for if boxes have same biomass over time
-        loop.ind <- loop.ind+1
-      } else {
-        bioms <- bioms-(harv/length(bioms))
-        harv <- harv-harv
+      if(var(bioms) != 0){ # If boxes still don't all have identical biomass
+        loop.ind <- loop.ind+1 # Increase the loop by one and start from the top
+      } else { # If boxes do all have identical biomass
+        bioms <- bioms-(harv/length(bioms)) # Take the remaining harvest evenly from the boxes
+        harv <- harv-harv # Update harvest to say that there is none left to take
         bioms
-        harv} # One possible ending
-    } else { # Do this if there is not much harvest left
-      last.catch <- harv/loop.ind
-      index <- which(bioms==high)
-      bioms[index] <- bioms[index]-last.catch
-      harv <- harv-last.catch*loop.ind
+        harv}
+    } else { # If less harvest needs to be taken than the difference between the two highest boxes (or collections of boxes)
+      last.catch <- harv/loop.ind # Divide harvest by the amount of boxes it's to be taken from
+      index <- which(bioms==high) # Find index of boxes about to be harvested
+      bioms[index] <- bioms[index]-last.catch # Harvest boxes
+      harv <- harv-last.catch*loop.ind # Update harvest to 0
       bioms
-      harv # Another possible ending
+      harv
     }
   }
   harv
   bioms
 }
 
-# Function for calculating effort based on catch and biomass
+# Function for calculating effort based on catch and biomass. After Schaefer model
 eff.calc <- function(pre.catch, post.catch, catch.const){
   catch <- pre.catch-post.catch
   effort <- catch/(catch.const*pre.catch)
@@ -133,7 +136,7 @@ eff.calc <- function(pre.catch, post.catch, catch.const){
 #   }
 # }
 
-# Bycatch based on effort function
+# Bycatch based on effort function. After Schaefer model
 bycatch.from.eff <- function(effort, species, bycatch.const){
   bycatch <- effort*species*bycatch.const
   bycatch
@@ -151,20 +154,21 @@ migration <- function(species, grids, box.of.int, n.box){
 # Grid reducer function. Used in grid.builder function
 grid.red <- function(grid, n.box){
   ocean.dims <- sqrt(n.box)
-  grid <- grid[-1:-ocean.dims,-1:-ocean.dims]
-  grid <- grid[-(nrow(grid)-ocean.dims+1):-nrow(grid),-(ncol(grid)-ocean.dims+1):-ncol(grid)]
-  grid[is.na(grid)] <- 0
-  grid <- t(grid)  # List needs to loop down columns so transposing
+  grid <- grid[-1:-ocean.dims,-1:-ocean.dims] # Does the first cut on the large grid
+  grid <- grid[-(nrow(grid)-ocean.dims+1):-nrow(grid),-(ncol(grid)-ocean.dims+1):-ncol(grid)] # Does the second cut on the large grid. Only the ocean grid is left
+  grid[is.na(grid)] <- 0 # NAs to 0s so there is zero probability of dispersing to those cells
+  grid <- t(grid)  # A final transposition so that dispersal is mapped onto grids in the same order that they appear in fin.list generated by grid.builder()
   grid
 }
 
 # Dispersal probability grid builder function
 grid.builder <- function(n.box, disp.on, disp.dim, dist.sigma){
-  ocean.dim <- sqrt(n.box)
-  grid.list <- list()
-  large.grid <- matrix(NA, nrow=ocean.dim+(2*ocean.dim), ncol=ocean.dim+(2*ocean.dim))
-  if(disp.on == TRUE){ # For turning dispersal on
-    disp.grid <- gaussian.kernel(sigma=dist.sigma, n=disp.dim)
+  ocean.dim <- sqrt(n.box) # Find the dimensions of the ocean grid (i.e. our main grid of interest)
+  grid.list <- list() # Build a list for storing results of loop
+  large.grid <- matrix(NA, nrow=ocean.dim+(2*ocean.dim), ncol=ocean.dim+(2*ocean.dim)) # Build a large grid that the ocean grid will sit within
+  if(disp.on == TRUE){ # If dispersal is on
+    disp.grid <- gaussian.kernel(sigma=dist.sigma, n=disp.dim) # Map a Gaussian dispersal kernel onto a matrix -- the dispersal grid
+    # For each cell in the dispersal grid, map its value onto the large grid. Center the whole matrix on a cell of interest
     for(row.offset in 1:ocean.dim){
       for(col.offset in 1:ocean.dim){
         curr.grid <- large.grid
@@ -173,11 +177,11 @@ grid.builder <- function(n.box, disp.on, disp.dim, dist.sigma){
             curr.grid[row+ocean.dim-(floor(disp.dim/2))-1+row.offset,col+ocean.dim-(floor(disp.dim/2))-1+col.offset] <- disp.grid[row,col]
           }
         }
-        grid.list[[length(grid.list)+1]] <- curr.grid
+        grid.list[[length(grid.list)+1]] <- curr.grid # Save the grid into a list of grids, one for each cell
       }
     }
     grid.list
-    fin.list <- lapply(grid.list, FUN = grid.red, n.box = n.box) # And that's it!
+    fin.list <- lapply(grid.list, FUN = grid.red, n.box = n.box) # Look at the list of grids and reduce each one to the appropriate ocean size
     fin.list
   } else { # If dispersal is not on, then all individuals will be retained in the grid in which they were born
     for(row in 1:ocean.dim){

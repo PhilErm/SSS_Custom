@@ -3,7 +3,7 @@
 
 # Required packages ####
 
-library(beepr) # If you want a sound to play once script processing is complete
+library(beepr) # If you want a sound to play once simulations are complete
 
 # Required scripts ####
 
@@ -73,17 +73,17 @@ for(p in catch.spect){ # For all levels of catch
     
     # Running the model
     for(i in 1:(n.time-1)){ # For each time step
-      eff.dist <- whole.eff(method=catch.method, species=n.fished[,i], allocation=allocation, catch=p, catch.const=catch.const, n.box=n.box)
+      eff.dist <- whole.eff(method=catch.method, species=n.fished[,i], allocation=allocation, catch=p, catch.const=catch.const, n.box=n.box) # Calculate how fishing efffort ought to be distributed across the seascape
       for(j in 1:n.box){ # For each box
-        n.fished[j,i+1] <- bev.holt(migration(n.fished[,i], grids.fished, j, n.box), r.fished, K.fished) - harv.from.eff(eff.dist[j], n.fished[j,i], catch.const)
+        n.fished[j,i+1] <- bev.holt(migration(n.fished[,i], grids.fished, j, n.box), r.fished, K.fished) - harv.from.eff(eff.dist[j], n.fished[j,i], catch.const) # Calculate the next timestep's population size
         n.bycatch[j,i+1] <- bev.holt(migration(n.bycatch[,i], grids.bycatch, j, n.box), r.bycatch, K.bycatch) - bycatch.from.eff(eff.dist[j], n.bycatch[j,i], bycatch.const)
         n.habitat[j,i+1] <- bev.holt.hab.eff(migration(n.habitat[,i], grids.habitat, j, n.box), r.habitat, K.habitat, allocation[j], habitat.const, eff.dist[j], n.box)
-        if(n.fished[j,i+1] < 0 || n.bycatch[j,i+1] < 0 || n.habitat[j,i+1] < 0 || is.na(n.fished[j,i+1]) || is.na(n.bycatch[j,i+1]) || is.na(n.habitat[j,i+1])){ # Saves details of any simulation which goes into a negative population size
-          new.row <- cbind(p, z, i+1)
-          colnames(new.row) <- neg.sims.names
-          negative.sims <- rbind(negative.sims, new.row)
+        if(n.fished[j,i+1] < 0 || n.bycatch[j,i+1] < 0 || n.habitat[j,i+1] < 0 || is.na(n.fished[j,i+1]) || is.na(n.bycatch[j,i+1]) || is.na(n.habitat[j,i+1])){ # If box's population size goes negative or to NA
+          new.row <- cbind(p, z, i+1) # Create a matrix with the details of the simulation
+          colnames(new.row) <- neg.sims.names # Name the columns as the same as those in the negative.sims matrix
+          negative.sims <- rbind(negative.sims, new.row) # Append the matrix onto the negative.sims matrix
         }
-        n.fished[j,i+1] <- ifelse(n.fished[j,i+1] <= 0 || is.na(n.fished[j,i+1]), 0, n.fished[j,i+1]) # Adjusting all negative population sizes to 0
+        n.fished[j,i+1] <- ifelse(n.fished[j,i+1] <= 0 || is.na(n.fished[j,i+1]), 0, n.fished[j,i+1]) # If a box has a negative population size, or NA for population size, change it to 0. Otherwise leave it as is
         n.bycatch[j,i+1] <- ifelse(n.bycatch[j,i+1] <= 0 || is.na(n.bycatch[j,i+1]), 0, n.bycatch[j,i+1])
         n.habitat[j,i+1] <- ifelse(n.habitat[j,i+1] <= 0 || is.na(n.habitat[j,i+1]), 0, n.habitat[j,i+1])
       }
@@ -100,8 +100,8 @@ for(p in catch.spect){ # For all levels of catch
   close(pb)
 }
 
-# Figures
+# Figures ####
 #source("scripts/figs.R")
 
-# Beep for end of processing
+# Beep for end of processing ####
 beep()
