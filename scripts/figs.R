@@ -154,7 +154,9 @@ catch.spectrum.results <- bind_rows(catch.spectrum.results, max.sparing.results,
 # Figure: best level of sparing for each catch target
 fig <- ggplot(data = catch.spectrum.results) +
   geom_line(mapping = aes(x = catch_f, y = prop.spared, group = distinguisher, col = distinguisher)) +
+  geom_point(mapping = aes(x = catch_f, y = prop.spared, group = distinguisher, shape = distinguisher, col = distinguisher)) +
   labs(x = "Catch target", y = "Proportion of seascape spared") +
   theme_bw() +
-  scale_colour_discrete(name = " ", labels = c("Optimal", "Maximum possible under catch target"))
+  scale_colour_discrete(name = " ", labels = c("Optimal", "Maximum possible under catch target")) +
+  scale_shape_discrete(name = " ", labels = c("Optimal", "Maximum possible under catch target"))
 print(fig)
