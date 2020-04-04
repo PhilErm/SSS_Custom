@@ -198,10 +198,10 @@ grid.builder <- function(n.box, disp.on, disp.dim, dist.sigma){
 }
 
 # Boundary type alterer function
-boundary <- function(grid, disp.type){
-  if(disp.type == 1){ # Individuals attempt to disperse out of boundaries and are lost
+boundary <- function(grid, bound.type){
+  if(bound.type == 1){ # Individuals attempt to disperse out of boundaries and are lost
   grid
-  } else if(disp.type == 2) { # Individuals do not attempt to disperse out of boundaries
+  } else if(bound.type == 2) { # Individuals do not attempt to disperse out of boundaries
   grid <- grid/sum(grid)
   }
 }

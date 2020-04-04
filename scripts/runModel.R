@@ -20,9 +20,9 @@ grids.bycatch <- grid.builder(n.box, disp.on, bycatch.disp.dim, bycatch.dist.sig
 grids.habitat <- grid.builder(n.box, disp.on, habitat.disp.dim, habitat.dist.sigma)
 
 # Altering dispersal grids depending on type of boundary selected
-grids.fished <- lapply(grids.fished, FUN = boundary, disp.type = fished.disp.type)
-grids.bycatch <- lapply(grids.bycatch, FUN = boundary, disp.type = bycatch.disp.type)
-grids.habitat <- lapply(grids.habitat, FUN = boundary, disp.type = habitat.disp.type)
+grids.fished <- lapply(grids.fished, FUN = boundary, bound.type = fished.bound.type)
+grids.bycatch <- lapply(grids.bycatch, FUN = boundary, bound.type = bycatch.bound.type)
+grids.habitat <- lapply(grids.habitat, FUN = boundary, bound.type = habitat.bound.type)
 
 # Creating data frame for storing which simulations have populations that go negative
 neg.sims.names <- c("catch", "spared boxes", "time")

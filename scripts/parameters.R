@@ -9,7 +9,7 @@ K.fished <- 500 # Carrying capacity (per box)
 # Dispersal
 fished.disp.dim <- 3 # Must be odd number so that center of dispersal kernel will be on a particular cell
 fished.dist.sigma <- 1.5 # Normal distribution sigma
-fished.disp.type <- 2 # 1 = Individuals attempt to disperse out of boundaries and are lost. 2 = Individuals do not attempt to disperse out of boundaries
+fished.bound.type <- 2 # 1 = Individuals attempt to disperse out of boundaries and are lost. 2 = Individuals do not attempt to disperse out of boundaries
 
 # Misc.
 fished.name <- "fished species" # Name of species
@@ -25,7 +25,7 @@ K.bycatch <- 500 # Carrying capacity (per box)
 # Dispersal
 bycatch.disp.dim <- 3 # Must be odd number so that dispersal probability centers on occupied cell properly
 bycatch.dist.sigma <- 1.5 # Normal distribution sigma
-bycatch.disp.type <- 2 # 1 = Individuals attempt to disperse out of boundaries and are lost. 2 = Individuals do not attempt to disperse out of boundaries
+bycatch.bound.type <- 2 # 1 = Individuals attempt to disperse out of boundaries and are lost. 2 = Individuals do not attempt to disperse out of boundaries
 
 # Misc.
 bycatch.name <- "bycatch species" # Name of species
@@ -41,7 +41,7 @@ K.habitat <- 500 # Carrying capacity (per box)
 # Dispersal
 habitat.disp.dim <- 3 # Must be odd number so that dispersal probability centers on occupied cell properly
 habitat.dist.sigma <- 1.5 # Normal distribution sigma
-habitat.disp.type <- 2 # 1 = Individuals attempt to disperse out of boundaries and are lost. 2 = Individuals do not attempt to disperse out of boundaries
+habitat.bound.type <- 2 # 1 = Individuals attempt to disperse out of boundaries and are lost. 2 = Individuals do not attempt to disperse out of boundaries
 
 # Misc.
 habitat.name <- "habitat species"
