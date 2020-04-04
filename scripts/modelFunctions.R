@@ -162,11 +162,11 @@ grid.red <- function(grid, n.box){
 }
 
 # Dispersal probability grid builder function
-grid.builder <- function(n.box, disp.on, disp.dim, dist.sigma){
+grid.builder <- function(n.box, disp.type, disp.dim, dist.sigma){
   ocean.dim <- sqrt(n.box) # Find the dimensions of the ocean grid (i.e. our main grid of interest)
   grid.list <- list() # Build a list for storing results of loop
   large.grid <- matrix(NA, nrow=ocean.dim+(2*ocean.dim), ncol=ocean.dim+(2*ocean.dim)) # Build a large grid that the ocean grid will sit within
-  if(disp.on == TRUE){ # If dispersal is on
+  if(disp.type == 1){ # If dispersal is based on normally distributed dispersal kernels
     disp.grid <- gaussian.kernel(sigma=dist.sigma, n=disp.dim) # Map a Gaussian dispersal kernel onto a matrix -- the dispersal grid
     # For each cell in the dispersal grid, map its value onto the large grid. Center the whole matrix on a cell of interest
     for(row.offset in 1:ocean.dim){
@@ -183,12 +183,21 @@ grid.builder <- function(n.box, disp.on, disp.dim, dist.sigma){
     grid.list
     fin.list <- lapply(grid.list, FUN = grid.red, n.box = n.box) # Look at the list of grids and reduce each one to the appropriate ocean size
     fin.list
-  } else { # If dispersal is not on, then all individuals will be retained in the grid in which they were born
+  } else if(disp.type == 2){ # If there is no dispersal
     for(row in 1:ocean.dim){
       for(col in 1:ocean.dim){
         curr.grid <- matrix(nrow = ocean.dim, ncol = ocean.dim)
         curr.grid[row,col] <- 1
         curr.grid[is.na(curr.grid)] <- 0
+        grid.list[[length(grid.list)+1]] <- curr.grid
+      }
+    }
+    fin.list <- lapply(grid.list, FUN = t) # Transposing list so will be read properly by migration function
+    fin.list
+  } else if(disp.type == 3){ # If all individuals equally redistribute themselves across seascape
+    for(row in 1:ocean.dim){
+      for(col in 1:ocean.dim){
+        curr.grid <- matrix(1/(ocean.dim^2), nrow = ocean.dim, ncol = ocean.dim)
         grid.list[[length(grid.list)+1]] <- curr.grid
       }
     }

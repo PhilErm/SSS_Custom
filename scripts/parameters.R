@@ -59,5 +59,5 @@ catch.int <- 250 # Interval size of catch spectrum
 
 n.time <- 20 # Length of time to simulate
 n.box <- 36 # Number of boxes. Must be a perfect square to facilitate the construction of a symmetrical grid
-disp.on <- TRUE # Value must be TRUE for dispersal to be occur
+disp.type <- 3 # Dispersal type. disp.type = 1 for normal distribution dispersal kernels. disp.type = 2 for no dispersal. disp.type = 3 for even distribution dispersal.
 catch.method <- 1 # catch.method = 1 for effort distributed to maintain best CPUE. catch.method = 2 for same amount of catch taken from each box. catch.method = 3 for same effort applied to each box

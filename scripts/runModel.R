@@ -15,9 +15,9 @@ source("scripts/modelFunctions.R")
 # Creating objects necessary for model to run
 
 # Creating grids to define dispersal probabilities
-grids.fished <- grid.builder(n.box, disp.on, fished.disp.dim, fished.dist.sigma)
-grids.bycatch <- grid.builder(n.box, disp.on, bycatch.disp.dim, bycatch.dist.sigma)
-grids.habitat <- grid.builder(n.box, disp.on, habitat.disp.dim, habitat.dist.sigma)
+grids.fished <- grid.builder(n.box, disp.type, fished.disp.dim, fished.dist.sigma)
+grids.bycatch <- grid.builder(n.box, disp.type, bycatch.disp.dim, bycatch.dist.sigma)
+grids.habitat <- grid.builder(n.box, disp.type, habitat.disp.dim, habitat.dist.sigma)
 
 # Altering dispersal grids depending on type of boundary selected
 grids.fished <- lapply(grids.fished, FUN = boundary, bound.type = fished.bound.type)
